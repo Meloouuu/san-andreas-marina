@@ -1,3 +1,4 @@
+import { initials } from '../../lib/utils';
 import { THEME } from '../../theme';
 export function Avatar({ name, photo, size, square }) {
   const s = size || 38;

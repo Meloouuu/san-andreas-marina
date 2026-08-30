@@ -1,6 +1,25 @@
 import { isoDate, todayISO, weekdayLabel, startOfWeek, addDays, fullName } from './utils';
 import { THEME } from '../theme';
 
+/* Statut du vehicule apres un changement de statut de location. Utilisee a
+   la fois pour la creation et la modification d'une location (voir
+   CLAUDE.md : ce changement doit etre enregistre, sinon il est perdu au
+   rechargement). `allowRelease` n'est vrai qu'a la modification : on ne
+   peut pas creer une location deja terminee/annulee. */
+export function deriveVehicleStatusForRentalStatut(vehicle, statut, { allowRelease } = {}) {
+  if (!vehicle) return null;
+  if (allowRelease && (statut === 'Terminée' || statut === 'Annulée')) {
+    return { ...vehicle, statut: 'Disponible' };
+  }
+  if (statut === 'En cours') {
+    return { ...vehicle, statut: 'Loué' };
+  }
+  if (statut === 'Réservée' && vehicle.statut === 'Disponible') {
+    return { ...vehicle, statut: 'Réservé' };
+  }
+  return null;
+}
+
 export function nextVehicleId(vehicles) {
   const nums = vehicles
     .map((v) => parseInt((v.identifiant || '').replace(/\D/g, ''), 10))
@@ -123,7 +142,7 @@ export function locationsPerDay(rentals, days) {
   return out;
 }
 
-const CHART_TOOLTIP_STYLE = {
+export const CHART_TOOLTIP_STYLE = {
   contentStyle: {
     background: THEME.bg2,
     border: `1px solid ${THEME.border}`,

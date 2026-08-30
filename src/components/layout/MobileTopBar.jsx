@@ -1,5 +1,5 @@
 import { Bell, Menu } from 'lucide-react';
-import { THEME } from '../../theme';
+import { THEME, LOGO } from '../../theme';
 
 export function MobileTopBar({ onOpenMenu, onBell, notifCount }) {
   return (

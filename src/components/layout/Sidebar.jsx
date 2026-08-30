@@ -1,5 +1,5 @@
-import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
-import { THEME } from '../../theme';
+import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Settings, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
+import { THEME, LOGO } from '../../theme';
 import { fullName } from '../../lib/utils';
 import { Avatar } from '../ui';
 

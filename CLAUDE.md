@@ -26,62 +26,70 @@ pas de Tailwind.
 ```
 src/
 ├── main.jsx              point d'entrée
-├── App.jsx               TOUTE l'application (~7600 lignes, 94 composants)
-└── lib/
-    ├── supabase.js       client Supabase (clés via variables d'environnement)
-    └── supabaseDb.js     toutes les lectures et écritures en base
+├── App.jsx               orchestration seule : state, chargement, routage
+├── theme.js              THEME, LOGO (base64 ~144 Ko), SESSION_KEY
+├── lib/
+│   ├── supabase.js       client Supabase (clés via variables d'environnement)
+│   ├── supabaseDb.js     toutes les lectures et écritures en base
+│   ├── sessionStore.js   persistance de la session (localStorage) uniquement
+│   ├── utils.js          fonctions pures : dates, formatage, identifiants
+│   └── stats.js          calculs métier : stats, disponibilité, lookups db.*
+├── hooks/
+│   └── useAppActions.js  toute la logique CRUD Supabase (voir plus bas)
+├── components/
+│   ├── ui/               composants réutilisables (Badge, Avatar, Modal…)
+│   └── layout/           Sidebar, MobileTopBar, MobileDrawer, NotificationBell
+└── pages/
+    └── *.jsx             une page par fichier, ses modales à côté
+                          (ex. GaragePage.jsx contient aussi AddVehicleModal,
+                          EditVehicleModal, AddMaintenanceModal)
 ```
 
----
+Ce découpage date d'un refactor complet de l'ancien `App.jsx` monolithique
+(~7600 lignes, 94 composants). Il n'y a plus de raison de tout remettre dans
+un seul fichier : le propriétaire du projet a validé le découpage en dossiers
+ci-dessus. Respecte-le en ajoutant du code au bon endroit plutôt qu'en
+grossissant `App.jsx` à nouveau.
 
-## Architecture d'App.jsx
-
-Un seul fichier, volontairement. Découper aiderait la lisibilité mais
-compliquerait les allers-retours avec le propriétaire du projet, qui remplace
-souvent le fichier entier. **Ne le découpe pas sans le lui demander.**
-
-Ordre du fichier :
-
-1. Imports, `THEME`, `LOGO` (le logo est un base64 de ~144 Ko, ligne 98 — ne
-   le touche pas, ne le reformate pas)
-2. Fonctions utilitaires (dates, formatage, identifiants)
-3. `seedDatabase()` — données de démonstration, plus utilisées depuis Supabase,
-   conservées comme référence de la forme des données
-4. `GlobalStyles` — **tout le CSS de l'application** dans une balise `<style>`
-5. Composants réutilisables (Badge, Avatar, Modal, StatCard…)
-6. Pages, dans l'ordre de la navigation
-7. `store` — persistance de la session uniquement
-8. `App` — état global, chargement, actions, routage
+Note : `seedDatabase()` (données de démonstration) a été supprimé — c'était du
+code mort, jamais appelé depuis le passage à Supabase.
 
 ### État et données
 
-Tout l'état vit dans `App` : `db` (objet unique contenant `users`, `vehicles`,
-`categories`, `rentals`, `permits`, `citizens`, `maintenances`,
+Tout l'état vit dans `App` (`App.jsx`) : `db` (objet unique contenant `users`,
+`vehicles`, `categories`, `rentals`, `permits`, `citizens`, `maintenances`,
 `professionalAppointments`) et `session` (utilisateur connecté).
 
-Le routage est un simple `switch` sur `page` dans `renderPage()`.
+Le routage est un simple `switch` sur `page` dans `renderPage()`, dans `App.jsx`.
 
 ### Le pattern des actions
 
-Toutes les écritures passent par l'objet `actions`, transmis en propriété aux
-pages. Chaque action suit le même schéma :
+Toutes les écritures passent par l'objet `actions`, construit par le hook
+`useAppActions({ db, setDb, notify })` (`src/hooks/useAppActions.js`) et transmis
+en propriété aux pages depuis `App.jsx`.
+
+La plupart des entités (véhicules, catégories, citoyens, permis, rendez-vous,
+employés) partagent le même schéma add/update/delete via la fabrique
+`makeCrudActions()` définie en haut de `useAppActions.js` :
 
 ```js
-addRental: async (data) => {
-  try {
-    const { saveRental } = await import('./lib/supabaseDb');
-    const rental = { id: uid('r'), ...data };
-    await saveRental(rental);          // 1. base
-    setDb(prev => ({ ...prev, ... })); // 2. écran
-    notify('...', 'success');          // 3. retour utilisateur
-  } catch (error) {
-    notify(`Erreur : ${error.message}`, 'error');
-  }
-}
+saveEntity: async (entity) => {
+  const { saveVehicle } = await import('../lib/supabaseDb');
+  return saveVehicle(entity);          // 1. base
+},
+// puis, en interne : setDb(prev => ({ ...prev, ... }))  // 2. écran
+//                    notify('...', 'success')            // 3. retour utilisateur
 ```
 
-`actions` dépend de `[db]` : plusieurs actions lisent `db` pour retrouver la
-ligne courante avant de la modifier. Ne repasse pas cette dépendance à `[]`.
+Pour ajouter une entité qui suit ce schéma standard, ajoute un appel à
+`makeCrudActions()` plutôt que de réécrire le trio try/save/setDb/notify à la
+main. Les locations (`addRental`/`updateRental`) restent des actions à part car
+elles doivent aussi répercuter le changement de statut sur le véhicule associé
+(voir l'effet de bord ci-dessous) — cette règle est isolée dans
+`deriveVehicleStatusForRentalStatut()` (`src/lib/stats.js`).
+
+`useAppActions` dépend de `[db]` : plusieurs actions lisent `db` pour retrouver
+la ligne courante avant de la modifier. Ne repasse pas cette dépendance à `[]`.
 
 **Effets de bord à ne pas oublier.** Créer ou modifier une location change aussi
 le statut du véhicule (Disponible → Réservé → Loué → Disponible). Ce changement
@@ -218,5 +226,9 @@ réellement. Les bugs les plus coûteux de ce projet n'étaient pas des erreurs 
 syntaxe mais des régressions silencieuses — une donnée qui ne s'enregistre plus,
 une mise en page qui s'effondre, une fonction appelée mais jamais exportée.
 
-Vérifie systématiquement que chaque fonction appelée par `App.jsx` existe bien
-dans `supabaseDb.js` : ce décalage s'est déjà produit deux fois.
+Vérifie systématiquement que chaque fonction importée depuis `supabaseDb.js`
+(par `useAppActions.js` ou par une page) y existe bien : ce décalage s'est déjà
+produit deux fois. De même, un composant utilisé dans un fichier de `pages/`
+ou `components/` doit y être importé explicitement — Vite ne signale pas à la
+compilation une variable non définie utilisée en JSX, l'erreur n'apparaît que
+dans la console du navigateur au moment du rendu.

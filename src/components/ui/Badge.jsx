@@ -1,3 +1,4 @@
+import { statusTone } from '../../lib/utils';
 export function Badge({ status, label }) {
   const tone = statusTone(status);
   const dotMap = { success: '🟢', error: '🔴', warn: '🟠', info: '🔵', gold: '🟡', neutral: '⚪' };
