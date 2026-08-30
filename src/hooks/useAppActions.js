@@ -168,11 +168,14 @@ export function useAppActions({ db, setDb, notify }) {
       },
     });
 
+    /* Les employes suivent le schema standard pour la fiche, mais le mot de
+       passe est traite a part : il n'entre jamais dans `db` et part en base
+       sous forme d'empreinte seulement (voir lib/password.js). */
     const user = makeCrudActions({
       db, setDb, notify,
       listKey: 'users',
       label: 'utilisateur',
-      buildEntity: (data) => ({ id: data.id || uid('user'), ...data }),
+      buildEntity: ({ password, ...data }) => ({ id: data.id || uid('user'), ...data }),
       saveEntity: async (entity) => {
         const { saveUser } = await import('../lib/supabaseDb');
         return saveUser(entity);
@@ -188,6 +191,44 @@ export function useAppActions({ db, setDb, notify }) {
         notFound: 'Utilisateur introuvable.',
       },
     });
+
+    /* Creation d'un compte : le mot de passe part avec la fiche pour que la
+       ligne ne soit jamais creee sans mot de passe, mais il est retire de
+       l'objet conserve a l'ecran. */
+    async function addUser({ password, ...data }) {
+      const entity = { id: data.id || uid('user'), ...data };
+      try {
+        const { saveUser } = await import('../lib/supabaseDb');
+        await saveUser(entity, password);
+        setDb((prev) => ({ ...prev, users: [...(prev.users || []), entity] }));
+        notify('Utilisateur ajouté avec succès.', 'success');
+      } catch (error) {
+        console.error('❌ Erreur ajout utilisateur :', error);
+        notify(`Erreur : ${error.message}`, 'error');
+      }
+    }
+
+    /* Definit un nouveau mot de passe pour un compte existant. L'ancien n'est
+       pas relu : on ne peut que le remplacer, jamais le consulter. */
+    async function setUserPassword(id, password) {
+      if (!password) return false;
+      try {
+        const { saveUserPassword } = await import('../lib/supabaseDb');
+        await saveUserPassword(id, password);
+        return true;
+      } catch (error) {
+        console.error('❌ Erreur mot de passe :', error);
+        notify(`Erreur : ${error.message}`, 'error');
+        return false;
+      }
+    }
+
+    async function updateUser(id, { password, ...patch }) {
+      await user.update(id, patch);
+      if (password && (await setUserPassword(id, password))) {
+        notify('Mot de passe mis à jour.', 'success');
+      }
+    }
 
     const rental = makeCrudActions({
       db, setDb, notify,
@@ -339,9 +380,10 @@ export function useAppActions({ db, setDb, notify }) {
       updateProfessionalAppointment: professionalAppointment.update,
       deleteProfessionalAppointment: professionalAppointment.remove,
 
-      addUser: user.add,
-      updateUser: user.update,
+      addUser,
+      updateUser,
       deleteUser: user.remove,
+      setUserPassword,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db]);

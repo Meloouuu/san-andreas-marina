@@ -33,7 +33,8 @@ src/
 │   ├── supabaseDb.js     toutes les lectures et écritures en base
 │   ├── sessionStore.js   persistance de la session (localStorage) uniquement
 │   ├── utils.js          fonctions pures : dates, formatage, identifiants
-│   └── stats.js          calculs métier : stats, disponibilité, lookups db.*
+│   ├── stats.js          calculs métier : stats, disponibilité, lookups db.*
+│   └── password.js       hachage et vérification des mots de passe (PBKDF2)
 ├── hooks/
 │   └── useAppActions.js  toute la logique CRUD Supabase (voir plus bas)
 ├── components/
@@ -152,9 +153,18 @@ Générés côté client par `uid(prefix)`, sous forme de texte (`v_a3f9c2`,
 Le propriétaire du projet en a été informé. Ne les présente pas comme
 résolues, et ne les aggrave pas.
 
-- **Les mots de passe sont en clair** dans la table `users`, lue depuis le
-  navigateur avec la clé anonyme. N'importe quel visiteur peut les lire dans
-  l'onglet réseau. La correction propre est Supabase Auth.
+- **Les mots de passe sont hachés** (PBKDF2-SHA256, sel aléatoire, 210 000
+  itérations) par `src/lib/password.js`. Ils ne sont plus lisibles : ni dans
+  l'onglet réseau, ni dans `db.users`, ni dans l'interface. On ne peut que les
+  remplacer, jamais les consulter. Ce qui reste vrai :
+  - la vérification a lieu **dans le navigateur** (`authenticateUser()` dans
+    `supabaseDb.js` lit l'empreinte du seul compte concerné) ; le hachage
+    protège le mot de passe lui-même, pas l'accès à la base ;
+  - avec la clé anonyme, un visiteur peut toujours lire la table `users` et
+    ses empreintes. Seules des politiques RLS, ou Supabase Auth, y remédient.
+  - **Ne remets jamais `select('*')` sur la table `users`** et ne fais jamais
+    entrer de mot de passe dans l'état `db` : ce sont les deux fuites qui ont
+    été refermées.
 - **Les permissions ne sont vérifiées que dans l'interface.** Les boutons
   d'administration sont masqués aux employés, mais rien n'empêche de contourner
   cela depuis la console. Il faudrait des politiques RLS côté Supabase.
@@ -183,6 +193,14 @@ Les écritures utilisent `upsert` avec `onConflict: 'id'` : la même fonction se
 npm install
 npm run dev      # développement, http://localhost:5173
 npm run build    # production, sortie dans dist/
+```
+
+Utilitaire ponctuel, à lancer une seule fois pour convertir en empreintes les
+mots de passe encore stockés en clair (les employés gardent le même mot de
+passe, seul son stockage change) :
+
+```bash
+node scripts/hash-passwords.mjs
 ```
 
 Déploiement automatique sur GitHub Pages à chaque envoi sur `main`, via

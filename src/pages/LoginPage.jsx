@@ -17,8 +17,8 @@ export function LoginPage({ onLogin, notify }) {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const res = onLogin(email.trim(), password);
+    setTimeout(async () => {
+      const res = await onLogin(email.trim(), password);
       if (!res.ok) setError(res.error);
       setLoading(false);
     }, 300);

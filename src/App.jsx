@@ -92,17 +92,22 @@ function App() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4200);
   }
 
-  function handleLogin(email, password) {
-    const user = db.users.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password,
-    );
+  /* La verification du mot de passe se fait en base, sur l'empreinte du seul
+     compte concerne : `db.users` ne contient plus aucun mot de passe. */
+  async function handleLogin(email, password) {
+    const echec = { ok: false, error: 'Adresse e-mail ou mot de passe incorrect.' };
 
-    if (!user) {
-      return {
-        ok: false,
-        error: 'Adresse e-mail ou mot de passe incorrect.',
-      };
+    let userId;
+    try {
+      const { authenticateUser } = await import('./lib/supabaseDb');
+      userId = await authenticateUser(email, password);
+    } catch (error) {
+      console.error('❌ Erreur de connexion :', error);
+      return { ok: false, error: 'Connexion impossible. Veuillez réessayer.' };
     }
+
+    const user = userId ? db.users.find((u) => u.id === userId) : null;
+    if (!user) return echec;
 
     setSession(user);
     sessionStore.set(SESSION_KEY, user.id, false);

@@ -28,7 +28,6 @@ function mapUser(u) {
     dateNaissance: toDate(u.date_naissance),
     photo: u.photo || '',
     email: u.email || '',
-    password: u.password || '',
     telephone: u.telephone || '',
     iban: u.iban || '',
     role: u.role || 'employe',
@@ -88,7 +87,11 @@ export async function loadDatabase() {
     professionalAppointmentsRes,
   ] = await Promise.all([
     supabase.from('categories').select('*'),
-    supabase.from('users').select('*'),
+    /* Jamais select(*) ici : la colonne du mot de passe ne doit pas descendre
+       dans le navigateur. Voir lib/password.js et authenticateUser(). */
+    supabase.from('users').select(
+      'id, prenom, nom, sexe, date_naissance, photo, email, telephone, iban, role, date_entree, contrat_signe, visite_medicale, date_creation'
+    ),
     supabase.from('citizens').select('*'),
     supabase.from('vehicles').select('*'),
     supabase.from('vehicle_notes').select('*'),
@@ -411,27 +414,36 @@ export async function deleteRental(rentalId) {
   }
 
 }
-export async function saveUser(user) {
+/* `plainPassword` ne sert qu'a la creation d'un compte : il est hashe avant
+   d'etre ecrit. Lors d'une modification de fiche on ne le transmet pas, et la
+   colonne du mot de passe n'est alors pas touchee (voir saveUserPassword). */
+export async function saveUser(user, plainPassword) {
+  const row = {
+    id: user.id,
+    prenom: user.prenom || '',
+    nom: user.nom || '',
+    sexe: user.sexe || '',
+    date_naissance: user.dateNaissance || null,
+    photo: user.photo || '',
+    email: user.email || '',
+    telephone: user.telephone || '',
+    iban: user.iban || '',
+    role: user.role || '',
+    date_entree: user.dateEntree || null,
+    contrat_signe: user.contratSigne || false,
+    visite_medicale: user.visiteMedicale || false,
+    date_creation: user.dateCreation || null,
+  };
+
+  if (plainPassword) {
+    const { hashPassword } = await import('./password');
+    row.password = await hashPassword(plainPassword);
+  }
+
   const { data, error } = await supabase
     .from('users')
-    .upsert({
-      id: user.id,
-      prenom: user.prenom || '',
-      nom: user.nom || '',
-      sexe: user.sexe || '',
-      date_naissance: user.dateNaissance || null,
-      photo: user.photo || '',
-      email: user.email || '',
-      telephone: user.telephone || '',
-      iban: user.iban || '',
-      role: user.role || '',
-      date_entree: user.dateEntree || null,
-      contrat_signe: user.contratSigne || false,
-      visite_medicale: user.visiteMedicale || false,
-      date_creation: user.dateCreation || null,
-      password: user.password || '',
-    })
-    .select()
+    .upsert(row)
+    .select('id')
     .single();
 
   if (error) {
@@ -460,6 +472,63 @@ export async function deleteUser(id) {
     throw error;
   }
 }
+/* Ecrit le mot de passe (hashe) d'un compte existant, sans toucher au reste
+   de la fiche. Fonction volontairement separee de saveUser() : une simple
+   modification de fiche employe ne peut ainsi jamais effacer le mot de passe. */
+export async function saveUserPassword(id, plainPassword) {
+  const { hashPassword } = await import('./password');
+  const { error } = await supabase
+    .from('users')
+    .update({ password: await hashPassword(plainPassword) })
+    .eq('id', id);
+
+  if (error) {
+    console.error('❌ ERREUR SUPABASE mot de passe :', error);
+    throw error;
+  }
+}
+
+/* Verifie un couple e-mail / mot de passe et renvoie l'identifiant de
+   l'employe, ou null si la combinaison est inconnue.
+   On ne lit l'empreinte que du compte concerne : les mots de passe des autres
+   employes ne descendent jamais dans le navigateur.
+   Un compte encore stocke en clair (avant hachage) est converti ici, lors de
+   sa premiere connexion reussie. */
+export async function authenticateUser(email, plainPassword) {
+  const wanted = String(email || '').trim().toLowerCase();
+  if (!wanted || !plainPassword) return null;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, email, password')
+    .ilike('email', wanted);
+
+  if (error) {
+    console.error('❌ ERREUR SUPABASE connexion :', error);
+    throw error;
+  }
+
+  /* ilike traite _ et % comme des jokers : on reverifie l'adresse exacte. */
+  const row = (data || []).find(
+    (u) => String(u.email || '').trim().toLowerCase() === wanted,
+  );
+  if (!row) return null;
+
+  const { verifyPassword, isHashed } = await import('./password');
+  if (!(await verifyPassword(plainPassword, row.password))) return null;
+
+  if (!isHashed(row.password)) {
+    try {
+      await saveUserPassword(row.id, plainPassword);
+    } catch (conversionError) {
+      /* La connexion reste valable, la conversion sera retentee ensuite. */
+      console.error('❌ Conversion du mot de passe impossible :', conversionError);
+    }
+  }
+
+  return row.id;
+}
+
 export async function saveProfessionalAppointment(appointment) {
   const row = {
     id: appointment.id,
