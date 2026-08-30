@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Wrench, Anchor } from 'lucide-react';
 import { THEME } from '../theme';
 import { todayISO, fullName } from '../lib/utils';
-import { nextVehicleId, categoryOf, userOf, vehicleStats } from '../lib/stats';
+import { nextVehicleId, categoryOf, vehicleStats } from '../lib/stats';
 import { Badge, PageHeader, Modal, SearchInput, Select, FieldRow, EmptyState } from '../components/ui';
 
 /* ============================================================
@@ -410,7 +410,6 @@ export function AddMaintenanceModal({ open, onClose, vehicle, db, actions, notif
     actions.addMaintenance(vehicle.id, {
       ...form,
       cout: Number(form.cout) || 0,
-      responsableNom: fullName(userOf(db, form.responsable)),
     });
     notify(`Maintenance enregistrée pour ${vehicle.nom}.`, 'success');
     onClose();

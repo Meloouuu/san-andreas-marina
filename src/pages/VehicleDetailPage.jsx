@@ -359,7 +359,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
                       <td>{formatDate(m.date)}</td>
                       <td>{m.type}</td>
                       <td>{formatCurrency(m.cout)}</td>
-                      <td>{m.responsableNom || m.responsable}</td>
+                      <td>{userOf(db, m.responsable) ? fullName(userOf(db, m.responsable)) : m.responsable}</td>
                       <td style={{ color: THEME.textMuted }}>{m.commentaire}</td>
                     </tr>
                   ))}
@@ -441,11 +441,10 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
         title="Supprimer ce véhicule ?"
         message={`Cette action est définitive et supprimera "${vehicle.nom}" du garage.`}
         confirmLabel="Supprimer"
-        onConfirm={() => {
-          actions.deleteVehicle(vehicle.id);
-          notify('Véhicule supprimé.', 'success');
+        onConfirm={async () => {
+          const ok = await actions.deleteVehicle(vehicle.id);
           setShowDelete(false);
-          back();
+          if (ok) back();
         }}
       />
     </div>

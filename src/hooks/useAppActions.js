@@ -44,7 +44,7 @@ function makeCrudActions({ db, setDb, notify, listKey, buildEntity, saveEntity, 
     },
 
     remove: async (id) => {
-      if (!deleteEntity) return;
+      if (!deleteEntity) return false;
       try {
         await deleteEntity(id);
         setDb((prev) => ({
@@ -52,9 +52,11 @@ function makeCrudActions({ db, setDb, notify, listKey, buildEntity, saveEntity, 
           [listKey]: prev[listKey].filter((item) => item.id !== id),
         }));
         notify(messages.deleted, 'success');
+        return true;
       } catch (error) {
         console.error(`❌ Erreur suppression ${label} :`, error);
         notify(`Erreur : ${error.message}`, 'error');
+        return false;
       }
     },
   };

@@ -705,44 +705,6 @@ export function PlanningPage({ db, actions, notify, session }) {
           </div>
         </div>
       )}
-      {session?.role === 'admin' && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 10,
-            marginTop: 18,
-            paddingTop: 14,
-            borderTop: `1px solid ${THEME.border}`,
-          }}
-        >
-          <button
-            className="sam-btn sam-btn-ghost"
-            onClick={() => {
-              setEditAppointment(detailAppointment);
-              setDetailAppointment(null);
-            }}
-          >
-            ✏️ Modifier
-          </button>
-
-          <button
-            className="sam-btn sam-btn-danger"
-            onClick={async () => {
-              if (!window.confirm('Voulez-vous vraiment supprimer ce rendez-vous professionnel ?')) {
-                return;
-              }
-
-              await actions.deleteProfessionalAppointment(detailAppointment.id);
-
-              setDetailAppointment(null);
-            }}
-          >
-            🗑️ Supprimer
-          </button>
-        </div>
-      )}
-
       <AddRentalModal
         open={showAdd}
         onClose={() => setShowAdd(false)}
@@ -924,16 +886,6 @@ export function PlanningPage({ db, actions, notify, session }) {
                 borderTop: `1px solid ${THEME.border}`,
               }}
             >
-              <button
-                className="sam-btn sam-btn-ghost"
-                onClick={() => {
-                  setEditAppointment(detailAppointment);
-                  setDetailAppointment(null);
-                }}
-              >
-                ✏️ Modifier
-              </button>
-
               <button
                 className="sam-btn"
                 style={{

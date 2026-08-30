@@ -1,4 +1,4 @@
-import { isoDate, todayISO, weekdayLabel, startOfWeek, addDays, fullName } from './utils';
+import { pad, isoDate, todayISO, weekdayLabel, startOfWeek, addDays, fullName } from './utils';
 import { THEME } from '../theme';
 
 /* Statut du vehicule apres un changement de statut de location. Utilisee a

@@ -358,9 +358,8 @@ export function RentalsPage({ db, actions, isAdmin, session, notify }) {
             : ''
         }
         confirmLabel="Supprimer"
-        onConfirm={() => {
-          actions.deleteRental(deleteRental.id);
-          notify('Location supprimée.', 'success');
+        onConfirm={async () => {
+          await actions.deleteRental(deleteRental.id);
           setDeleteRental(null);
         }}
       />

@@ -255,7 +255,14 @@ function App() {
       case 'citizens':
         return <CitizensPage db={db} notify={notify} openCitizen={openCitizen} />;
       case 'citizen-detail':
-        return <CitizenDetailPage db={db} citizenId={selectedCitizenId} back={() => setPage('citizens')} />;
+        return (
+          <CitizenDetailPage
+            db={db}
+            actions={actions}
+            citizenId={selectedCitizenId}
+            back={() => setPage('citizens')}
+          />
+        );
       case 'database':
         return <DatabasePage db={db} isAdmin={isAdmin} />;
       case 'history':

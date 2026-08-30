@@ -152,9 +152,8 @@ export function AdminCategories({ db, actions, notify }) {
             : ''
         }
         confirmLabel="Supprimer"
-        onConfirm={() => {
-          actions.deleteCategory(deleteCat.id);
-          notify('Catégorie supprimée.', 'success');
+        onConfirm={async () => {
+          await actions.deleteCategory(deleteCat.id);
           setDeleteCat(null);
         }}
       />
@@ -534,9 +533,8 @@ export function AdminUsers({ db, actions, notify, session }) {
         title="Supprimer cet utilisateur ?"
         message={deleteUser ? `Le compte de ${fullName(deleteUser)} sera définitivement supprimé.` : ''}
         confirmLabel="Supprimer"
-        onConfirm={() => {
-          actions.deleteUser(deleteUser.id);
-          notify('Utilisateur supprimé.', 'success');
+        onConfirm={async () => {
+          await actions.deleteUser(deleteUser.id);
           setDeleteUser(null);
         }}
       />
@@ -619,9 +617,8 @@ export function AdminRentals({ db, actions, notify }) {
         title="Supprimer cette location ?"
         message={deleteRental ? `La location ${deleteRental.numero} sera définitivement supprimée.` : ''}
         confirmLabel="Supprimer"
-        onConfirm={() => {
-          actions.deleteRental(deleteRental.id);
-          notify('Location supprimée.', 'success');
+        onConfirm={async () => {
+          await actions.deleteRental(deleteRental.id);
           setDeleteRental(null);
         }}
       />
