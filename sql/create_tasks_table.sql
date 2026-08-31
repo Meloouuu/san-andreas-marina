@@ -28,3 +28,27 @@ create table if not exists public.tasks (
 
 -- Accélère le regroupement par événement quand la liste s'allonge.
 create index if not exists tasks_evenement_idx on public.tasks (evenement);
+
+
+-- ------------------------------------------------------------------
+-- Si l'application affiche toujours « la to-do list n'est pas encore
+-- installée » après avoir lancé le script ci-dessus.
+--
+-- 1) Vérifier que la table a bien été créée sur CE projet :
+--
+--      select table_name
+--      from information_schema.tables
+--      where table_schema = 'public' and table_name = 'tasks';
+--
+--    - Une ligne "tasks" est renvoyée -> passer au point 2.
+--    - Aucune ligne -> le script n'a pas été exécuté sur ce projet
+--      (mauvais projet, ou requête non lancée) : relancer le script.
+--
+-- 2) L'API Supabase garde en mémoire la liste des tables ; après la
+--    création d'une table, ce cache met parfois un moment à se mettre à
+--    jour. Pour le forcer, exécuter :
+--
+--      notify pgrst, 'reload schema';
+--
+--    Puis recharger la page du site.
+-- ------------------------------------------------------------------
