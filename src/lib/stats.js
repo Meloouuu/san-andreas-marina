@@ -82,13 +82,57 @@ export function computeEmployeeStats(db) {
     .sort((a, b) => b.ca - a.ca);
 }
 
+/* Liste unifiée des dépenses.
+   Deux sources : les dépenses saisies sur la page Dépenses, et les coûts de
+   maintenance déjà renseignés dans les fiches véhicules. Les secondes sont
+   marquées `source: 'maintenance'` pour rester identifiables à l'écran et
+   ne pas être modifiables depuis la page Dépenses — elles se gèrent depuis
+   la fiche du véhicule concerné. */
+export function expenseEntries(db) {
+  const saisies = (db.expenses || []).map((e) => ({
+    id: e.id,
+    date: e.date,
+    libelle: e.libelle,
+    categorie: e.categorie || 'Sans catégorie',
+    montant: Number(e.montant || 0),
+    note: e.note || '',
+    source: 'manuelle',
+  }));
+
+  const maintenances = (db.maintenances || [])
+    .filter((m) => Number(m.cout || 0) > 0)
+    .map((m) => {
+      const vehicule = vehicleOf(db, m.vehiculeId);
+      return {
+        id: m.id,
+        date: m.date,
+        libelle: m.type || 'Maintenance',
+        categorie: 'Maintenance',
+        montant: Number(m.cout || 0),
+        note: [vehicule ? vehicule.nom : null, m.commentaire].filter(Boolean).join(' — '),
+        source: 'maintenance',
+      };
+    });
+
+  return [...saisies, ...maintenances].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+export function sumExpenses(entries) {
+  return entries.reduce((s, e) => s + Number(e.montant || 0), 0);
+}
+
 export function computeDashboardStats(db) {
   const weekStart = startOfWeek(todayISO());
   const weekEnd = addDays(weekStart, 6);
   const weekRentals = db.rentals.filter((r) => inRange(r.date, weekStart, weekEnd));
+  const caWeek = sumCA(weekRentals);
+  const depensesWeek = sumExpenses(expenseEntries(db).filter((e) => inRange(e.date, weekStart, weekEnd)));
+
   return {
     locationsWeek: weekRentals.filter((r) => r.statut !== 'Annulée').length,
-    caWeek: sumCA(weekRentals),
+    caWeek,
+    depensesWeek,
+    beneficeWeek: caWeek - depensesWeek,
     vehiculesDispo: db.vehicles.filter((v) => v.statut === 'Disponible').length,
     reservationsAVenir: db.rentals.filter((r) => r.statut === 'Réservée' && r.date >= todayISO()).length,
     permisDelivres: db.permits.filter((p) => p.statut === 'Valide').length,
@@ -96,34 +140,61 @@ export function computeDashboardStats(db) {
   };
 }
 
-export function caByPeriod(rentals, period) {
-  // period: 'semaine' | 'mois' | 'annee'
+/* Chiffre d'affaires ET dépenses sur les mêmes tranches de temps.
+   Les deux séries doivent partager exactement les mêmes intervalles pour
+   être superposables sur un graphique : elles sont donc calculées ensemble
+   plutôt que par deux fonctions séparées.
+   period: 'semaine' | 'mois' | 'annee' */
+export function financeByPeriod(db, period) {
+  const rentals = db.rentals;
+  const depenses = expenseEntries(db);
   const buckets = [];
+
   if (period === 'semaine') {
     const start = startOfWeek(todayISO());
     for (let i = 0; i < 7; i++) {
       const d = addDays(start, i);
-      buckets.push({ label: weekdayLabel(d), date: d, ca: sumCA(rentals.filter((r) => r.date === d)) });
+      buckets.push({
+        label: weekdayLabel(d),
+        date: d,
+        ca: sumCA(rentals.filter((r) => r.date === d)),
+        depenses: sumExpenses(depenses.filter((e) => e.date === d)),
+      });
     }
   } else if (period === 'mois') {
     for (let i = 29; i >= 0; i--) {
       const d = isoDate(-i);
-      buckets.push({ label: d.slice(8, 10), date: d, ca: sumCA(rentals.filter((r) => r.date === d)) });
+      buckets.push({
+        label: d.slice(8, 10),
+        date: d,
+        ca: sumCA(rentals.filter((r) => r.date === d)),
+        depenses: sumExpenses(depenses.filter((e) => e.date === d)),
+      });
     }
   } else {
     const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const byMonth = {};
+    const caByMonth = {};
     rentals.forEach((r) => {
       if (r.statut !== 'Annulée') {
         const m = r.date.slice(0, 7);
-        byMonth[m] = (byMonth[m] || 0) + Number(r.prix);
+        caByMonth[m] = (caByMonth[m] || 0) + Number(r.prix);
       }
+    });
+    const depByMonth = {};
+    depenses.forEach((e) => {
+      const m = String(e.date).slice(0, 7);
+      depByMonth[m] = (depByMonth[m] || 0) + Number(e.montant || 0);
     });
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}`;
-      buckets.push({ label: months[d.getMonth()], date: key, ca: byMonth[key] || 0 });
+      buckets.push({
+        label: months[d.getMonth()],
+        date: key,
+        ca: caByMonth[key] || 0,
+        depenses: depByMonth[key] || 0,
+      });
     }
   }
   return buckets;

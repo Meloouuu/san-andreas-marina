@@ -19,6 +19,7 @@ import { PlanningPage } from './pages/PlanningPage';
 import { PermitsPage } from './pages/PermitsPage';
 import { CitizensPage } from './pages/CitizensPage';
 import { TodoPage } from './pages/TodoPage';
+import { ExpensesPage } from './pages/ExpensesPage';
 import { CitizenDetailPage } from './pages/CitizenDetailPage';
 import { DatabasePage } from './pages/DatabasePage';
 import { HistoryPage } from './pages/HistoryPage';
@@ -286,6 +287,8 @@ function App() {
         return <CitizensPage db={db} notify={notify} openCitizen={openCitizen} />;
       case 'todo':
         return <TodoPage db={db} actions={actions} notify={notify} />;
+      case 'expenses':
+        return <ExpensesPage db={db} actions={actions} notify={notify} />;
       case 'citizen-detail':
         return (
           <CitizenDetailPage

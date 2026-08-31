@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Settings, ListChecks, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
+import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Settings, ListChecks, Receipt, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
 import { THEME, LOGO } from '../../theme';
 import { fullName } from '../../lib/utils';
 import { Avatar } from '../ui';
@@ -25,6 +25,7 @@ export const NAV_SECTIONS = [
     label: 'Gestion',
     items: [
       { id: 'database', label: 'Base de données', icon: DatabaseIcon },
+      { id: 'expenses', label: 'Dépenses', icon: Receipt },
       { id: 'history', label: 'Historique', icon: HistoryIcon },
     ],
   },

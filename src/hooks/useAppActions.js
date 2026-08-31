@@ -191,6 +191,27 @@ export function useAppActions({ db, setDb, notify }) {
       },
     });
 
+    const expense = makeCrudActions({
+      db, setDb, notify,
+      listKey: 'expenses',
+      label: 'dépense',
+      buildEntity: (data) => ({ id: data.id || uid('dep'), ...data }),
+      saveEntity: async (entity) => {
+        const { saveExpense } = await import('../lib/supabaseDb');
+        return saveExpense(entity);
+      },
+      deleteEntity: async (id) => {
+        const { deleteExpense } = await import('../lib/supabaseDb');
+        return deleteExpense(id);
+      },
+      messages: {
+        added: 'Dépense enregistrée avec succès.',
+        updated: 'Dépense modifiée avec succès.',
+        deleted: 'Dépense supprimée.',
+        notFound: 'Dépense introuvable.',
+      },
+    });
+
     /* Les employes suivent le schema standard pour la fiche, mais le mot de
        passe est traite a part : il n'entre jamais dans `db` et part en base
        sous forme d'empreinte seulement (voir lib/password.js). */
@@ -402,6 +423,10 @@ export function useAppActions({ db, setDb, notify }) {
       addProfessionalAppointment: professionalAppointment.add,
       updateProfessionalAppointment: professionalAppointment.update,
       deleteProfessionalAppointment: professionalAppointment.remove,
+
+      addExpense: expense.add,
+      updateExpense: expense.update,
+      deleteExpense: expense.remove,
 
       addTask: task.add,
       updateTask: task.update,

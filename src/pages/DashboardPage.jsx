@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Calendar, DollarSign, ClipboardList, FileText, Anchor, ShieldCheck, Trophy } from 'lucide-react';
+import { Calendar, DollarSign, ClipboardList, FileText, Anchor, ShieldCheck, Trophy, TrendingDown, Receipt } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from 'recharts';
 import { THEME, LOGO } from '../theme';
 import { formatCurrency, fullName } from '../lib/utils';
-import { computeEmployeeStats, computeDashboardStats, caByPeriod, locationsPerDay, CHART_TOOLTIP_STYLE } from '../lib/stats';
+import { computeEmployeeStats, computeDashboardStats, financeByPeriod, locationsPerDay, CHART_TOOLTIP_STYLE } from '../lib/stats';
 import { Avatar, StatCard, GoldPodium } from '../components/ui';
 
 /* ============================================================
@@ -14,7 +14,7 @@ export function DashboardPage({ db, session, navigate }) {
   const [caPeriod, setCaPeriod] = useState('semaine');
   const stats = useMemo(() => computeDashboardStats(db), [db]);
   const employeeStats = useMemo(() => computeEmployeeStats(db).slice(0, 5), [db]);
-  const caData = useMemo(() => caByPeriod(db.rentals, caPeriod), [db, caPeriod]);
+  const caData = useMemo(() => financeByPeriod(db, caPeriod), [db, caPeriod]);
   const locData = useMemo(() => locationsPerDay(db.rentals, 10), [db]);
   const permitData = useMemo(
     () => [
@@ -70,6 +70,18 @@ export function DashboardPage({ db, session, navigate }) {
           icon={<DollarSign size={18} />}
           highlight
         />
+        <StatCard
+          label="Dépenses cette semaine"
+          value={formatCurrency(stats.depensesWeek)}
+          icon={<TrendingDown size={18} />}
+        />
+        <StatCard
+          label="Bénéfice net"
+          value={formatCurrency(stats.beneficeWeek)}
+          icon={<Receipt size={18} />}
+          sub={stats.beneficeWeek < 0 ? 'Semaine déficitaire' : "Chiffre d'affaires moins dépenses"}
+          highlight
+        />
         <StatCard label="Véhicules disponibles" value={stats.vehiculesDispo} icon={<Anchor size={18} />} />
         <StatCard
           label="Réservations à venir"
@@ -91,7 +103,7 @@ export function DashboardPage({ db, session, navigate }) {
         <div className="sam-card" style={{ padding: 22, minWidth: 0 }}>
           <div className="flex items-center justify-between flex-wrap gap-3" style={{ marginBottom: 14 }}>
             <h3 className="sam-display" style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
-              Évolution du chiffre d'affaires
+              Chiffre d'affaires et dépenses
             </h3>
             <div
               className="flex gap-1"
@@ -122,6 +134,10 @@ export function DashboardPage({ db, session, navigate }) {
                   <stop offset="0%" stopColor={THEME.gold} stopOpacity={0.45} />
                   <stop offset="100%" stopColor={THEME.gold} stopOpacity={0} />
                 </linearGradient>
+                <linearGradient id="depGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={THEME.error} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={THEME.error} stopOpacity={0} />
+                </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
               <XAxis
@@ -139,7 +155,30 @@ export function DashboardPage({ db, session, navigate }) {
                 width={54}
               />
               <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(v) => formatCurrency(v)} />
-              <Area type="monotone" dataKey="ca" stroke={THEME.gold} strokeWidth={2} fill="url(#caGrad)" />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                height={28}
+                iconType="plainline"
+                wrapperStyle={{ fontSize: 12, color: THEME.textMuted }}
+              />
+              <Area
+                type="monotone"
+                dataKey="ca"
+                name="Chiffre d'affaires"
+                stroke={THEME.gold}
+                strokeWidth={2}
+                fill="url(#caGrad)"
+              />
+              <Area
+                type="monotone"
+                dataKey="depenses"
+                name="Dépenses"
+                stroke={THEME.error}
+                strokeWidth={2}
+                strokeDasharray="5 4"
+                fill="url(#depGrad)"
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>

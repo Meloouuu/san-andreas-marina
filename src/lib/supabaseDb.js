@@ -86,6 +86,7 @@ export async function loadDatabase() {
     maintenancesRes,
     professionalAppointmentsRes,
     tasksRes,
+    expensesRes,
   ] = await Promise.all([
     supabase.from('categories').select('*'),
     /* Jamais select(*) ici : la colonne du mot de passe ne doit pas descendre
@@ -101,6 +102,7 @@ export async function loadDatabase() {
     supabase.from('maintenances').select('*'),
     supabase.from('professional_appointments').select('*'),
     supabase.from('tasks').select('*'),
+    supabase.from('expenses').select('*'),
   ]);
 
   const results = [
@@ -115,14 +117,21 @@ export async function loadDatabase() {
     professionalAppointmentsRes,
   ];
 
-  /* `tasksRes` est volontairement absent de cette liste : la table `tasks`
-     peut ne pas encore exister (voir sql/create_tasks_table.sql). Une erreur
-     dessus ne doit pas provoquer l'écran « Connexion à la base impossible »
-     et couper tout le site — la to-do list s'affichera simplement vide. */
+  /* `tasksRes` et `expensesRes` sont volontairement absents de cette liste :
+     ces tables ont été ajoutées après coup et peuvent ne pas encore exister
+     (voir sql/). Une erreur dessus ne doit pas provoquer l'écran « Connexion
+     à la base impossible » et couper tout le site — la page concernée
+     s'affichera simplement vide avec la marche à suivre. */
   if (tasksRes && tasksRes.error) {
     console.warn(
       'Table `tasks` indisponible — la to-do list restera vide tant que sql/create_tasks_table.sql n\'a pas été exécuté.',
       tasksRes.error.message,
+    );
+  }
+  if (expensesRes && expensesRes.error) {
+    console.warn(
+      'Table `expenses` indisponible — les dépenses resteront vides tant que sql/create_expenses_table.sql n\'a pas été exécuté.',
+      expensesRes.error.message,
     );
   }
 
@@ -211,7 +220,63 @@ export async function loadDatabase() {
             dateCreation: toDate(t.date_creation),
           }))
         : [],
+
+    expensesUnavailable: !!(expensesRes && expensesRes.error),
+
+    expenses:
+      expensesRes && !expensesRes.error
+        ? (expensesRes.data || []).map(e => ({
+            id: e.id,
+            date: toDate(e.date),
+            libelle: e.libelle || '',
+            categorie: e.categorie || '',
+            montant: Number(e.montant || 0),
+            note: e.note || '',
+            dateCreation: toDate(e.date_creation),
+          }))
+        : [],
   };
+}
+
+/* Même traitement que pour les tâches : tant que la table n'existe pas,
+   Supabase répond un message technique en anglais qu'on remplace par la
+   consigne à suivre. */
+function tableExpenseError(error) {
+  const message = String((error && error.message) || '');
+  if (message.includes('Could not find the table') || error.code === 'PGRST205') {
+    return new Error(
+      "Les dépenses ne sont pas encore installées : exécutez le script sql/create_expenses_table.sql dans Supabase (SQL Editor).",
+    );
+  }
+  return error;
+}
+
+export async function saveExpense(expense) {
+  const { error } = await supabase
+    .from('expenses')
+    .upsert({
+      id: expense.id,
+      date: expense.date || null,
+      libelle: expense.libelle || '',
+      categorie: expense.categorie || '',
+      montant: Number(expense.montant || 0),
+      note: expense.note || '',
+      date_creation: expense.dateCreation || null,
+    }, { onConflict: 'id' });
+
+  if (error) {
+    console.error('Erreur Supabase (dépenses) :', error);
+    throw tableExpenseError(error);
+  }
+}
+
+export async function deleteExpense(expenseId) {
+  const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
+
+  if (error) {
+    console.error('Erreur Supabase (suppression dépense) :', error);
+    throw tableExpenseError(error);
+  }
 }
 
 /* La table `tasks` doit être créée à la main (sql/create_tasks_table.sql).
