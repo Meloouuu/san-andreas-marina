@@ -80,6 +80,21 @@ export function fullName(person) {
   return `${person.prenom || ''} ${person.nom || ''}`.trim();
 }
 
+/* Affiche un nombre d'heures décimal en durée lisible : 1.5 -> "1h30".
+   Utile depuis que les locations se réservent par tranches de 30 minutes. */
+export function formatHours(totalHours) {
+  const totalMin = Math.round((Number(totalHours) || 0) * 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
+
+/* Libellé d'un créneau de location ('30min' -> '30 min'). */
+export function formatDuree(duree) {
+  return String(duree || '').replace(/^(\d+)min$/, '$1 min');
+}
+
 export function statusTone(status) {
   const map = {
     Disponible: 'success',

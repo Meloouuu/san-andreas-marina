@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react';
 import { THEME } from '../theme';
-import { formatCurrency, formatDate, fullName, todayISO } from '../lib/utils';
-import { categoryOf, checkAvailability, nextRentalNumber, userOf, vehicleOf } from '../lib/stats';
+import { formatCurrency, formatDate, formatDuree, fullName, todayISO } from '../lib/utils';
+import {
+  categoryOf,
+  checkAvailability,
+  nextRentalNumber,
+  userOf,
+  vehicleOf,
+  RENTAL_DURATIONS,
+} from '../lib/stats';
 import { Badge, ConfirmDialog, EmptyState, FieldRow, Modal, PageHeader, SearchInput, Select } from '../components/ui';
 
 /* ============================================================
@@ -155,7 +162,7 @@ export function AddRentalModal({ open, onClose, db, actions, notify, session, de
               <Select
                 value={form.duree}
                 onChange={(v) => setForm({ ...form, duree: v })}
-                options={['1h', '2h', '3h', '4h', '5h', '6h', '8h'].map((d) => ({ value: d, label: d }))}
+                options={RENTAL_DURATIONS.map((d) => ({ value: d, label: formatDuree(d) }))}
               />
             </FieldRow>
           </div>

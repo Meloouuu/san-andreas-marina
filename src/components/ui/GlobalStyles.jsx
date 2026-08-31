@@ -315,8 +315,10 @@ export function GlobalStyles() {
       /* ============================================================
          CONTRÔLES
          ============================================================ */
+      /* Utilisée aussi bien sur un <div> (DocCheck) que sur un <button>
+         (to-do list) : padding remis à zéro pour garder la même case de 20px. */
       .sam-checkbox {
-        width: 20px; height: 20px; border-radius: 7px;
+        width: 20px; height: 20px; border-radius: 7px; padding: 0;
         border: 1.5px solid rgba(255,255,255,0.24);
         display: inline-flex; align-items: center; justify-content: center;
         cursor: pointer; flex-shrink: 0;

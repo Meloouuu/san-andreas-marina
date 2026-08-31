@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Settings, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
+import { ChevronRight, LogOut, User, Home, Ship, ClipboardList, CalendarDays, ShieldCheck, Settings, ListChecks, Users as UsersIcon, Database as DatabaseIcon, History as HistoryIcon } from 'lucide-react';
 import { THEME, LOGO } from '../../theme';
 import { fullName } from '../../lib/utils';
 import { Avatar } from '../ui';
@@ -18,6 +18,7 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'permits', label: 'Permis & Formations', icon: ShieldCheck },
       { id: 'citizens', label: 'Citoyens / Clients', icon: UsersIcon },
+      { id: 'todo', label: 'To-do list', icon: ListChecks },
     ],
   },
   {

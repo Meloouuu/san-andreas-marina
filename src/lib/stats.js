@@ -169,8 +169,33 @@ export function userOf(db, id) {
 export function citizenOf(db, id) {
   return db.citizens.find((c) => c.id === id);
 }
+/* Durées proposées pour une location : de 30 minutes à 8 heures, par pas de
+   30 minutes. Le format stocké ('30min', '1h', '1h30') doit rester lisible
+   par parseDuree() juste en dessous — les deux évoluent ensemble. */
+export const RENTAL_DURATIONS = Array.from({ length: 16 }, (_, i) => {
+  const totalMin = (i + 1) * 30;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (!h) return `${m}min`;
+  return m ? `${h}h${m}` : `${h}h`;
+});
+
+/* Convertit une durée affichée en nombre d'heures décimal.
+   Accepte les nouveaux créneaux ('30min', '1h30') comme les valeurs déjà
+   enregistrées en base avant les demi-heures ('1h', '8h'). */
 export function parseDuree(d) {
-  return parseFloat(d) || 0;
+  if (!d) return 0;
+  const s = String(d).trim().toLowerCase();
+
+  const minutesOnly = s.match(/^(\d+)\s*min/);
+  if (minutesOnly) return Number(minutesOnly[1]) / 60;
+
+  const hoursMinutes = s.match(/^(\d+)\s*h\s*(\d+)?/);
+  if (hoursMinutes) {
+    return Number(hoursMinutes[1]) + (hoursMinutes[2] ? Number(hoursMinutes[2]) / 60 : 0);
+  }
+
+  return parseFloat(s) || 0;
 }
 
 export function vehicleStats(db, vehicleId) {

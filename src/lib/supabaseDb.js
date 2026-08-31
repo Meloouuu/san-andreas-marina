@@ -85,6 +85,7 @@ export async function loadDatabase() {
     rentalsRes,
     maintenancesRes,
     professionalAppointmentsRes,
+    tasksRes,
   ] = await Promise.all([
     supabase.from('categories').select('*'),
     /* Jamais select(*) ici : la colonne du mot de passe ne doit pas descendre
@@ -99,6 +100,7 @@ export async function loadDatabase() {
     supabase.from('rentals').select('*'),
     supabase.from('maintenances').select('*'),
     supabase.from('professional_appointments').select('*'),
+    supabase.from('tasks').select('*'),
   ]);
 
   const results = [
@@ -112,6 +114,17 @@ export async function loadDatabase() {
     maintenancesRes,
     professionalAppointmentsRes,
   ];
+
+  /* `tasksRes` est volontairement absent de cette liste : la table `tasks`
+     peut ne pas encore exister (voir sql/create_tasks_table.sql). Une erreur
+     dessus ne doit pas provoquer l'écran « Connexion à la base impossible »
+     et couper tout le site — la to-do list s'affichera simplement vide. */
+  if (tasksRes && tasksRes.error) {
+    console.warn(
+      'Table `tasks` indisponible — la to-do list restera vide tant que sql/create_tasks_table.sql n\'a pas été exécuté.',
+      tasksRes.error.message,
+    );
+  }
 
   const failed = results.find(r => r && r.error);
 
@@ -180,7 +193,50 @@ export async function loadDatabase() {
         statut: a.statut || 'Prévu',
         dateCreation: toDate(a.date_creation),
       })),
+
+    tasks:
+      tasksRes && !tasksRes.error
+        ? (tasksRes.data || []).map(t => ({
+            id: t.id,
+            evenement: t.evenement || '',
+            titre: t.titre || '',
+            fait: !!t.fait,
+            dateEcheance: toDate(t.date_echeance),
+            priorite: t.priorite || 'Normale',
+            note: t.note || '',
+            dateCreation: toDate(t.date_creation),
+          }))
+        : [],
   };
+}
+
+export async function saveTask(task) {
+  const { error } = await supabase
+    .from('tasks')
+    .upsert({
+      id: task.id,
+      evenement: task.evenement || '',
+      titre: task.titre || '',
+      fait: !!task.fait,
+      date_echeance: task.dateEcheance || null,
+      priorite: task.priorite || 'Normale',
+      note: task.note || '',
+      date_creation: task.dateCreation || null,
+    }, { onConflict: 'id' });
+
+  if (error) {
+    console.error('Erreur Supabase (tâches) :', error);
+    throw error;
+  }
+}
+
+export async function deleteTask(taskId) {
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+
+  if (error) {
+    console.error('Erreur Supabase (suppression tâche) :', error);
+    throw error;
+  }
 }
 export async function saveVehicle(vehicle) {
   const { error } = await supabase

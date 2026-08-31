@@ -170,6 +170,27 @@ export function useAppActions({ db, setDb, notify }) {
       },
     });
 
+    const task = makeCrudActions({
+      db, setDb, notify,
+      listKey: 'tasks',
+      label: 'tâche',
+      buildEntity: (data) => ({ id: data.id || uid('task'), ...data }),
+      saveEntity: async (entity) => {
+        const { saveTask } = await import('../lib/supabaseDb');
+        return saveTask(entity);
+      },
+      deleteEntity: async (id) => {
+        const { deleteTask } = await import('../lib/supabaseDb');
+        return deleteTask(id);
+      },
+      messages: {
+        added: 'Tâche ajoutée avec succès.',
+        updated: 'Tâche modifiée avec succès.',
+        deleted: 'Tâche supprimée.',
+        notFound: 'Tâche introuvable.',
+      },
+    });
+
     /* Les employes suivent le schema standard pour la fiche, mais le mot de
        passe est traite a part : il n'entre jamais dans `db` et part en base
        sous forme d'empreinte seulement (voir lib/password.js). */
@@ -381,6 +402,36 @@ export function useAppActions({ db, setDb, notify }) {
       addProfessionalAppointment: professionalAppointment.add,
       updateProfessionalAppointment: professionalAppointment.update,
       deleteProfessionalAppointment: professionalAppointment.remove,
+
+      addTask: task.add,
+      updateTask: task.update,
+      deleteTask: task.remove,
+
+      /* Cocher/décocher une tâche passe par une action dédiée plutôt que par
+         updateTask : sur une liste on coche vite plusieurs cases, et une
+         notification de succès à chaque clic serait envahissante. Seule une
+         erreur reste signalée. */
+      toggleTask: async (id) => {
+        const current = db.tasks.find((t) => t.id === id);
+        if (!current) {
+          notify('Tâche introuvable.', 'error');
+          return false;
+        }
+        const updated = { ...current, fait: !current.fait };
+        try {
+          const { saveTask } = await import('../lib/supabaseDb');
+          await saveTask(updated);
+          setDb((prev) => ({
+            ...prev,
+            tasks: prev.tasks.map((t) => (t.id === id ? updated : t)),
+          }));
+          return true;
+        } catch (error) {
+          console.error('❌ Erreur mise à jour tâche :', error);
+          notify(`Erreur : ${error.message}`, 'error');
+          return false;
+        }
+      },
 
       addUser,
       updateUser,

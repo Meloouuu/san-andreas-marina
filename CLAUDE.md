@@ -176,11 +176,19 @@ résolues, et ne les aggrave pas.
 ## Base de données
 
 Tables : `categories`, `users`, `citizens`, `vehicles`, `vehicle_notes`,
-`permits`, `rentals`, `maintenances`, `professional_appointments`.
+`permits`, `rentals`, `maintenances`, `professional_appointments`, `tasks`.
 
 `loadDatabase()` les charge toutes en parallèle au démarrage et lève une
 exception si l'une échoue, ce qui déclenche l'écran « Connexion à la base
 impossible ».
+
+**Exception : `tasks`.** Cette table (to-do list) est chargée dans le même
+`Promise.all` mais son erreur n'est **pas** fatale — elle est seulement
+signalée par un `console.warn` et la liste retombe sur `[]`. Raison : la table
+a été ajoutée après coup et doit être créée à la main dans Supabase
+(`sql/create_tasks_table.sql`) ; sans ce traitement, un projet où le SQL n'a
+pas encore été exécuté verrait tout le site tomber sur l'écran d'erreur.
+Garde ce comportement si tu touches à `loadDatabase()`.
 
 Les écritures utilisent `upsert` avec `onConflict: 'id'` : la même fonction sert
 à créer et à modifier.

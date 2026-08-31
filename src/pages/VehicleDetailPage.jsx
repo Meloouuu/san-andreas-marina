@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { Anchor, Calendar, ChevronLeft, ClipboardList, Clock, DollarSign, FileText, Pencil, Plus, Trash2, TrendingUp, Wrench } from 'lucide-react';
 import { THEME } from '../theme';
-import { addDays, formatCurrency, formatDate, fullName, isoDate, startOfWeek, todayISO, uid } from '../lib/utils';
+import {
+  addDays,
+  formatCurrency,
+  formatDate,
+  formatHours,
+  fullName,
+  isoDate,
+  startOfWeek,
+  todayISO,
+  uid,
+} from '../lib/utils';
 import { categoryOf, userOf, vehicleOf, vehicleStats } from '../lib/stats';
 import { Badge, ConfirmDialog, EmptyState, Select, StatCard } from '../components/ui';
 import { EditVehicleModal, AddMaintenanceModal } from './GaragePage';
@@ -220,7 +230,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
             />
             <StatCard
               label="Temps total de location"
-              value={`${stats.totalH.toFixed(0)} h`}
+              value={formatHours(stats.totalH)}
               icon={<Clock size={16} />}
             />
             <StatCard
