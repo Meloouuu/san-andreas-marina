@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Calendar, DollarSign, ClipboardList, FileText, Anchor, ShieldCheck, Trophy, TrendingDown, Receipt } from 'lucide-react';
+import { Calendar, DollarSign, ClipboardList, Anchor, ShieldCheck, Trophy, TrendingDown, Receipt } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from 'recharts';
 import { THEME, LOGO } from '../theme';
 import { formatCurrency, fullName } from '../lib/utils';
@@ -89,11 +89,6 @@ export function DashboardPage({ db, session, navigate }) {
           icon={<Calendar size={18} />}
         />
         <StatCard label="Permis délivrés" value={stats.permisDelivres} icon={<ShieldCheck size={18} />} />
-        <StatCard
-          label="Formations réalisées"
-          value={stats.formationsRealisees}
-          icon={<FileText size={18} />}
-        />
       </div>
 
       <div

@@ -136,7 +136,6 @@ export function computeDashboardStats(db) {
     vehiculesDispo: db.vehicles.filter((v) => v.statut === 'Disponible').length,
     reservationsAVenir: db.rentals.filter((r) => r.statut === 'Réservée' && r.date >= todayISO()).length,
     permisDelivres: db.permits.filter((p) => p.statut === 'Valide').length,
-    formationsRealisees: db.permits.length,
   };
 }
 
