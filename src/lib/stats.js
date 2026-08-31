@@ -144,13 +144,17 @@ export function locationsPerDay(rentals, days) {
 
 export const CHART_TOOLTIP_STYLE = {
   contentStyle: {
-    background: THEME.bg2,
-    border: `1px solid ${THEME.border}`,
-    borderRadius: 10,
+    background: 'linear-gradient(155deg, rgba(21,48,74,0.96), rgba(11,31,51,0.93))',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: 14,
     fontSize: 12.5,
     color: THEME.text,
+    padding: '10px 14px',
+    boxShadow: '0 24px 50px -18px rgba(2,8,16,0.95), inset 0 1px 0 rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(16px)',
   },
-  labelStyle: { color: THEME.textMuted },
+  labelStyle: { color: THEME.textMuted, fontWeight: 700, marginBottom: 4 },
+  cursor: { stroke: 'rgba(212,167,44,0.35)', strokeWidth: 1 },
 };
 
 export function categoryOf(db, id) {

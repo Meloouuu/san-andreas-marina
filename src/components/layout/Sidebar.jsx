@@ -97,7 +97,7 @@ export function NavList({ page, isAdmin, onNavigate }) {
 
 export function SidebarFooter({ user, onProfile, onLogout }) {
   return (
-    <div style={{ borderTop: `1px solid ${THEME.border}`, padding: '14px 12px' }}>
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '16px 14px' }}>
       <button type="button" className="sam-profile-card" onClick={onProfile}>
         <Avatar name={fullName(user)} photo={user.photo} size={42} />
         <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
@@ -137,17 +137,33 @@ export function Sidebar({ page, session, isAdmin, onNavigate, onProfile, onLogou
     <div
       className="sam-hide-mobile"
       style={{
-        width: 274,
+        width: 282,
         flexShrink: 0,
-        background: THEME.bg2,
-        borderRight: `1px solid ${THEME.border}`,
+        background: 'linear-gradient(180deg, rgba(11,31,51,0.9), rgba(7,21,37,0.82))',
+        backdropFilter: 'blur(26px) saturate(120%)',
+        WebkitBackdropFilter: 'blur(26px) saturate(120%)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: '18px 0 60px -30px rgba(2,8,16,0.9)',
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
         position: 'sticky',
         top: 0,
+        overflow: 'hidden',
       }}
     >
+      {/* Halo doré derrière le logo */}
+      <div
+        style={{
+          position: 'absolute',
+          top: -120,
+          left: -60,
+          width: 320,
+          height: 280,
+          background: 'radial-gradient(circle, rgba(212,167,44,0.16), transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
       <SidebarBrand />
       <NavList page={page} isAdmin={isAdmin} onNavigate={onNavigate} />
       <SidebarFooter user={session} onProfile={onProfile} onLogout={onLogout} />

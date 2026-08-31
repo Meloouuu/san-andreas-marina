@@ -7,15 +7,16 @@ export function SearchInput({ value, onChange, placeholder }) {
         size={15}
         style={{
           position: 'absolute',
-          left: 12,
+          left: 17,
           top: '50%',
           transform: 'translateY(-50%)',
           color: THEME.textMuted,
+          pointerEvents: 'none',
         }}
       />
       <input
         className="sam-input"
-        style={{ paddingLeft: 36 }}
+        style={{ paddingLeft: 42, borderRadius: 999 }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || 'Rechercher...'}

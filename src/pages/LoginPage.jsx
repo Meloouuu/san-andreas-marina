@@ -41,74 +41,117 @@ export function LoginPage({ onLogin, notify }) {
         padding: 20,
       }}
     >
+      {/* --- Décor : nappes lumineuses --- */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(ellipse 900px 500px at 50% 0%, rgba(212,167,44,0.09), transparent 60%), linear-gradient(180deg, #071525, #050f1c 70%)`,
+          background:
+            'radial-gradient(ellipse 1000px 620px at 50% -12%, rgba(212,167,44,0.16), transparent 62%),' +
+            'radial-gradient(circle 620px at 12% 88%, rgba(21,48,74,0.9), transparent 65%),' +
+            'radial-gradient(circle 520px at 92% 22%, rgba(212,167,44,0.07), transparent 65%),' +
+            'linear-gradient(180deg, #071525, #050f1c 72%)',
         }}
       />
-      <svg
+
+      {/* Anneaux concentriques diffus, à la manière d'une rose des vents */}
+      <div
         style={{
           position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          width: '100%',
-          height: 220,
-          opacity: 0.5,
+          top: '50%',
+          left: '50%',
+          width: 940,
+          height: 940,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          border: '1px solid rgba(212,167,44,0.07)',
+          boxShadow: 'inset 0 0 120px rgba(212,167,44,0.05)',
+          pointerEvents: 'none',
         }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: 620,
+          height: 620,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          border: '1px solid rgba(212,167,44,0.09)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Vagues du bas */}
+      <svg
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: 240, opacity: 0.6 }}
         viewBox="0 0 1440 220"
         preserveAspectRatio="none"
       >
         <path
           d="M0,120 C 240,200 480,40 720,120 C 960,200 1200,40 1440,120 L1440,220 L0,220 Z"
-          fill="rgba(212,167,44,0.045)"
+          fill="rgba(212,167,44,0.05)"
         />
         <path
           d="M0,160 C 240,80 480,220 720,160 C 960,100 1200,200 1440,140 L1440,220 L0,220 Z"
-          fill="rgba(16,40,63,0.7)"
+          fill="rgba(16,40,63,0.72)"
         />
       </svg>
-      <svg
-        style={{ position: 'absolute', top: 40, left: 40, opacity: 0.12 }}
-        width="90"
-        height="90"
-        viewBox="0 0 24 24"
-        fill="none"
-      >
-        <circle cx="12" cy="12" r="10" stroke={THEME.gold} strokeWidth="0.7" />
-        <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke={THEME.gold} strokeWidth="0.7" />
-        <path d="M12 12 L16 8 M12 12 L10 15" stroke={THEME.gold} strokeWidth="1" strokeLinecap="round" />
-      </svg>
 
+      {/* --- Carte de connexion --- */}
       <div
         className="sam-card sam-modal-anim"
-        style={{ width: '100%', maxWidth: 420, padding: '40px 34px', position: 'relative', zIndex: 2 }}
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          padding: '44px 38px 34px',
+          position: 'relative',
+          zIndex: 2,
+          borderRadius: 28,
+          background: 'linear-gradient(160deg, rgba(21,48,74,0.82), rgba(11,31,51,0.66))',
+          boxShadow: '0 50px 100px -30px rgba(2,8,16,0.95), inset 0 1px 0 rgba(255,255,255,0.1)',
+        }}
       >
-        <div className="flex flex-col items-center" style={{ marginBottom: 22 }}>
-          <div style={{ position: 'relative', marginBottom: 14, width: 128, height: 128 }}>
+        <div className="flex flex-col items-center" style={{ marginBottom: 28 }}>
+          <div style={{ position: 'relative', marginBottom: 18, width: 132, height: 132 }}>
             <div
               style={{
                 position: 'absolute',
-                inset: -20,
-                background: 'radial-gradient(circle, rgba(212,167,44,0.30), transparent 70%)',
-                filter: 'blur(8px)',
+                inset: -26,
+                background: 'radial-gradient(circle, rgba(212,167,44,0.38), transparent 70%)',
+                filter: 'blur(12px)',
               }}
             />
             <img
               src={LOGO}
               alt="San Andreas Marina"
-              style={{ width: 128, height: 128, objectFit: 'contain', position: 'relative' }}
+              style={{ width: 132, height: 132, objectFit: 'contain', position: 'relative' }}
             />
           </div>
           <h1
             className="sam-display"
-            style={{ fontSize: 25, fontWeight: 700, textAlign: 'center', margin: 0, letterSpacing: '.01em' }}
+            style={{
+              fontSize: 30,
+              fontWeight: 700,
+              textAlign: 'center',
+              margin: 0,
+              lineHeight: 1.15,
+              letterSpacing: '.01em',
+              textShadow: '0 10px 34px rgba(2,8,16,0.7)',
+            }}
           >
             Bienvenue à San Andreas Marina
           </h1>
-          <p style={{ color: THEME.textMuted, fontSize: 13.5, textAlign: 'center', margin: '8px 0 0' }}>
+          <p
+            style={{
+              color: THEME.textMuted,
+              fontSize: 13.5,
+              textAlign: 'center',
+              margin: '10px 0 0',
+              lineHeight: 1.6,
+            }}
+          >
             Connectez-vous à votre espace professionnel.
           </p>
         </div>
@@ -117,6 +160,7 @@ export function LoginPage({ onLogin, notify }) {
           <FieldRow label="Adresse e-mail">
             <input
               className="sam-input"
+              style={{ borderRadius: 999 }}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -128,7 +172,7 @@ export function LoginPage({ onLogin, notify }) {
             <div style={{ position: 'relative' }}>
               <input
                 className="sam-input"
-                style={{ paddingRight: 40 }}
+                style={{ paddingRight: 48, borderRadius: 999 }}
                 type={showPw ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -138,18 +182,26 @@ export function LoginPage({ onLogin, notify }) {
               <button
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
+                aria-label={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 style={{
                   position: 'absolute',
-                  right: 10,
+                  right: 8,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
                   color: THEME.textMuted,
                   cursor: 'pointer',
+                  padding: 0,
                 }}
               >
-                {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </FieldRow>
@@ -161,9 +213,10 @@ export function LoginPage({ onLogin, notify }) {
                 border: '1px solid rgba(224,82,82,0.3)',
                 color: '#F3A5A5',
                 fontSize: 13,
-                padding: '9px 12px',
-                borderRadius: 8,
-                marginBottom: 14,
+                padding: '11px 15px',
+                borderRadius: 14,
+                marginBottom: 16,
+                lineHeight: 1.5,
               }}
             >
               {error}
@@ -174,16 +227,22 @@ export function LoginPage({ onLogin, notify }) {
             type="button"
             onClick={handleSubmit}
             className="sam-btn sam-btn-gold"
-            style={{ width: '100%', padding: '12px', fontSize: 14, letterSpacing: '.04em' }}
+            style={{ width: '100%', padding: '15px', fontSize: 13.5, letterSpacing: '.14em' }}
             disabled={loading}
           >
             {loading ? 'CONNEXION...' : 'SE CONNECTER'}
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
           <span
-            style={{ color: THEME.textMuted, fontSize: 13, cursor: 'pointer' }}
+            style={{
+              color: THEME.textMuted,
+              fontSize: 13,
+              cursor: 'pointer',
+              borderBottom: '1px solid rgba(170,183,196,0.25)',
+              paddingBottom: 2,
+            }}
             onClick={() =>
               notify('Contactez un administrateur pour réinitialiser votre mot de passe.', 'info')
             }
@@ -194,26 +253,17 @@ export function LoginPage({ onLogin, notify }) {
 
         <div
           style={{
-            marginTop: 24,
-            paddingTop: 16,
-            borderTop: `1px solid ${THEME.border}`,
+            marginTop: 28,
+            paddingTop: 18,
+            borderTop: '1px solid rgba(255,255,255,0.07)',
             fontSize: 11.5,
             color: THEME.textMuted,
             textAlign: 'center',
+            letterSpacing: '.06em',
             lineHeight: 1.8,
           }}
         >
-          <div
-            style={{
-              fontWeight: 700,
-              color: THEME.goldLight,
-              marginBottom: 4,
-              letterSpacing: '.06em',
-              textTransform: 'uppercase',
-              fontSize: 10,
-            }}
-          ></div>
-          Bienvenue dans l'équipage ⚓🚁 <br />
+          Bienvenue dans l'équipage ⚓🚁
         </div>
       </div>
     </div>

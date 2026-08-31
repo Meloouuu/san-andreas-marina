@@ -93,7 +93,16 @@ export function DashboardPage({ db, session, navigate }) {
             <h3 className="sam-display" style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
               Évolution du chiffre d'affaires
             </h3>
-            <div className="flex gap-1" style={{ background: THEME.bg2, padding: 3, borderRadius: 9 }}>
+            <div
+              className="flex gap-1"
+              style={{
+                background: 'rgba(7,21,37,0.5)',
+                padding: 4,
+                borderRadius: 999,
+                border: '1px solid rgba(255,255,255,0.07)',
+                boxShadow: 'inset 0 2px 8px rgba(2,8,16,0.45)',
+              }}
+            >
               {['semaine', 'mois', 'annee'].map((p) => (
                 <div
                   key={p}
@@ -238,7 +247,7 @@ export function DashboardPage({ db, session, navigate }) {
               className="flex items-center gap-4 flex-wrap"
               style={{
                 padding: '14px 16px',
-                borderRadius: 12,
+                borderRadius: 16,
                 background:
                   i === 0
                     ? 'linear-gradient(90deg, rgba(212,167,44,0.16), rgba(212,167,44,0.02))'

@@ -73,7 +73,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
             style={{
               width: 64,
               height: 64,
-              borderRadius: 14,
+              borderRadius: 18,
               background: `linear-gradient(135deg, ${THEME.bg2}, ${THEME.card})`,
               display: 'flex',
               alignItems: 'center',
@@ -403,7 +403,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
                     style={{
                       background: 'rgba(255,255,255,0.02)',
                       border: '1px solid rgba(255,255,255,0.05)',
-                      borderRadius: 10,
+                      borderRadius: 18,
                       padding: '12px 14px',
                     }}
                   >

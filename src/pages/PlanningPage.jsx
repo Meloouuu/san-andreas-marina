@@ -64,13 +64,14 @@ export function AddProfessionalAppointmentModal({ open, onClose, actions, notify
   const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
-    background: THEME.input || THEME.card,
-    border: `1px solid ${THEME.border}`,
-    borderRadius: 8,
-    padding: '10px 12px',
+    background: 'rgba(7,21,37,0.55)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: 12,
+    padding: '12px 16px',
     color: THEME.text,
     outline: 'none',
     fontSize: 13,
+    boxShadow: 'inset 0 1px 2px rgba(2,8,16,0.4)',
   };
 
   const labelStyle = {
@@ -241,7 +242,7 @@ export function RentalChip({ r, db, onClick }) {
               ? 'rgba(93,163,240,0.12)'
               : 'rgba(170,183,196,0.1)',
         border: `1px solid ${tone === 'success' ? 'rgba(32,199,122,0.3)' : tone === 'info' ? 'rgba(93,163,240,0.3)' : 'rgba(170,183,196,0.2)'}`,
-        borderRadius: 8,
+        borderRadius: 11,
         padding: '7px 9px',
         marginBottom: 6,
         cursor: 'pointer',
@@ -273,7 +274,7 @@ export function ProfessionalAppointmentChip({ appointment, onClick }) {
       style={{
         background: 'rgba(212,167,44,0.10)',
         border: '1px solid rgba(212,167,44,0.30)',
-        borderRadius: 8,
+        borderRadius: 11,
         padding: '7px 9px',
         marginBottom: 6,
         cursor: 'pointer',
@@ -380,10 +381,13 @@ export function PlanningPage({ db, actions, notify, session }) {
         <div
           className="flex gap-1"
           style={{
-            background: THEME.card,
-            padding: 4,
-            borderRadius: 10,
-            border: `1px solid ${THEME.border}`,
+            background: 'rgba(7,21,37,0.5)',
+            padding: 5,
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            boxShadow: 'inset 0 2px 8px rgba(2,8,16,0.45)',
           }}
         >
           {[
@@ -396,13 +400,13 @@ export function PlanningPage({ db, actions, notify, session }) {
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button className="sam-btn sam-btn-ghost sam-btn-sm" onClick={() => shift(-1)}>
             <ChevronLeft size={15} />
           </button>
           <span
             className="sam-display"
-            style={{ fontWeight: 700, fontSize: 15, minWidth: 160, textAlign: 'center' }}
+            style={{ fontWeight: 700, fontSize: 15, minWidth: 140, textAlign: 'center' }}
           >
             {view === 'jour' && `${weekdayLabel(selectedDate)} ${formatDate(selectedDate)}`}
             {view === 'semaine' && `${formatDate(weekStart)} — ${formatDate(addDays(weekStart, 6))}`}
@@ -514,7 +518,7 @@ export function PlanningPage({ db, actions, notify, session }) {
                     className="flex items-center gap-4 flex-wrap"
                     style={{
                       padding: '14px 16px',
-                      borderRadius: 12,
+                      borderRadius: 16,
                       background: 'rgba(255,255,255,0.02)',
                       border: `1px solid ${THEME.border}`,
                       cursor: 'pointer',
@@ -559,7 +563,7 @@ export function PlanningPage({ db, actions, notify, session }) {
                   className="flex items-center gap-4 flex-wrap"
                   style={{
                     padding: '14px 16px',
-                    borderRadius: 12,
+                    borderRadius: 16,
                     background: 'rgba(212,167,44,0.06)',
                     border: '1px solid rgba(212,167,44,0.25)',
                     cursor: 'pointer',

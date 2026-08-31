@@ -758,7 +758,7 @@ export function AdminSettings({ session }) {
                 style={{
                   width: 46,
                   height: 46,
-                  borderRadius: 10,
+                  borderRadius: 14,
                   background: hex,
                   border: `1px solid ${THEME.border}`,
                 }}
@@ -786,24 +786,29 @@ export function AdminStat({ label, value, icon }) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: `1px solid ${THEME.border}`,
-        borderRadius: 12,
-        padding: '13px 16px',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 16,
+        padding: '14px 17px',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 13,
         minWidth: 0,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
     >
       <div
         style={{
-          width: 34,
-          height: 34,
-          borderRadius: 9,
+          width: 36,
+          height: 36,
+          borderRadius: 12,
           flexShrink: 0,
-          background: 'rgba(212,167,44,0.12)',
-          color: THEME.gold,
+          background: 'linear-gradient(140deg, rgba(212,167,44,0.2), rgba(212,167,44,0.05))',
+          border: '1px solid rgba(212,167,44,0.24)',
+          boxShadow: '0 6px 18px -8px rgba(212,167,44,0.55)',
+          color: THEME.goldLight,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

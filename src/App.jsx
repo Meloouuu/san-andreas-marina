@@ -151,12 +151,32 @@ function App() {
         }}
       >
         <GlobalStyles />
-        <div className="sam-card sam-fade-in" style={{ maxWidth: 460, padding: 32, textAlign: 'center' }}>
-          <img
-            src={LOGO}
-            alt="San Andreas Marina"
-            style={{ width: 72, height: 72, objectFit: 'contain', opacity: 0.9 }}
-          />
+        <div
+          className="sam-card sam-fade-in"
+          style={{
+            maxWidth: 470,
+            padding: 38,
+            textAlign: 'center',
+            borderRadius: 28,
+            background: 'linear-gradient(160deg, rgba(21,48,74,0.86), rgba(11,31,51,0.7))',
+            boxShadow: '0 50px 100px -30px rgba(2,8,16,0.95), inset 0 1px 0 rgba(255,255,255,0.09)',
+          }}
+        >
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
+            <span
+              style={{
+                position: 'absolute',
+                inset: -18,
+                background: 'radial-gradient(circle, rgba(212,167,44,0.3), transparent 70%)',
+                filter: 'blur(10px)',
+              }}
+            />
+            <img
+              src={LOGO}
+              alt="San Andreas Marina"
+              style={{ width: 76, height: 76, objectFit: 'contain', position: 'relative' }}
+            />
+          </div>
           <h2 className="sam-display" style={{ fontSize: 21, fontWeight: 700, margin: '16px 0 8px' }}>
             Connexion a la base impossible
           </h2>
@@ -195,12 +215,21 @@ function App() {
         }}
       >
         <GlobalStyles />
-        <img
-          src={LOGO}
-          alt="San Andreas Marina"
-          style={{ width: 84, height: 84, opacity: 0.85 }}
-          className="sam-fade-in"
-        />
+        <div className="sam-fade-in" style={{ position: 'relative', display: 'inline-flex' }}>
+          <span
+            style={{
+              position: 'absolute',
+              inset: -30,
+              background: 'radial-gradient(circle, rgba(212,167,44,0.32), transparent 70%)',
+              filter: 'blur(14px)',
+            }}
+          />
+          <img
+            src={LOGO}
+            alt="San Andreas Marina"
+            style={{ width: 92, height: 92, objectFit: 'contain', position: 'relative', opacity: 0.95 }}
+          />
+        </div>
       </div>
     );
   }
@@ -317,20 +346,25 @@ function App() {
             className="sam-hide-desktop sam-card sam-modal-anim"
             style={{
               position: 'fixed',
-              top: 62,
+              top: 70,
               left: 14,
               right: 14,
               maxHeight: 340,
               overflowY: 'auto',
               zIndex: 260,
+              background: 'linear-gradient(155deg, rgba(21,48,74,0.97), rgba(11,31,51,0.94))',
+              boxShadow: '0 34px 70px -22px rgba(2,8,16,0.95), inset 0 1px 0 rgba(255,255,255,0.08)',
             }}
           >
             <div
               style={{
-                padding: '12px 16px',
-                borderBottom: `1px solid ${THEME.border}`,
+                padding: '14px 18px',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
                 fontWeight: 700,
-                fontSize: 13.5,
+                fontSize: 13,
+                letterSpacing: '.1em',
+                textTransform: 'uppercase',
+                color: THEME.textMuted,
               }}
             >
               Notifications
