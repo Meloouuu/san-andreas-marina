@@ -170,7 +170,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
                 </div>
               ))}
               {vehicle.description && (
-                <p style={{ color: THEME.textMuted, fontSize: 13, marginTop: 12, lineHeight: 1.6 }}>
+                <p style={{ color: THEME.textMuted, fontSize: 13, marginTop: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {vehicle.description}
                 </p>
               )}
@@ -370,7 +370,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
                       <td>{m.type}</td>
                       <td>{formatCurrency(m.cout)}</td>
                       <td>{userOf(db, m.responsable) ? fullName(userOf(db, m.responsable)) : m.responsable}</td>
-                      <td style={{ color: THEME.textMuted }}>{m.commentaire}</td>
+                      <td style={{ color: THEME.textMuted, whiteSpace: 'pre-wrap' }}>{m.commentaire}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -388,13 +388,20 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
           <p style={{ color: THEME.textMuted, fontSize: 12.5, margin: '0 0 16px' }}>
             Visibles uniquement par les employés de San Andreas Marina.
           </p>
-          <div className="flex gap-2" style={{ marginBottom: 18 }}>
-            <input
+          {/* Zone de texte et non champ simple : une note interne tient
+              souvent sur plusieurs lignes. Entrée revient donc à la ligne,
+              et Ctrl+Entrée enregistre pour garder un raccourci clavier. */}
+          <div className="flex gap-2 items-start" style={{ marginBottom: 18 }}>
+            <textarea
               className="sam-input"
+              rows={2}
+              style={{ resize: 'vertical', fontFamily: 'inherit', flex: 1, minWidth: 0 }}
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Ajouter une note interne..."
-              onKeyDown={(e) => e.key === 'Enter' && submitNote()}
+              placeholder="Ajouter une note interne... (Ctrl+Entrée pour enregistrer)"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitNote();
+              }}
             />
             <button className="sam-btn sam-btn-gold sam-btn-sm" onClick={submitNote}>
               Ajouter
@@ -417,7 +424,7 @@ export function VehicleDetailPage({ db, actions, isAdmin, session, notify, vehic
                       padding: '12px 14px',
                     }}
                   >
-                    <div style={{ fontSize: 13.5, color: THEME.text }}>{n.text}</div>
+                    <div style={{ fontSize: 13.5, color: THEME.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{n.text}</div>
                     <div style={{ fontSize: 11.5, color: THEME.textMuted, marginTop: 6 }}>
                       {n.auteur} · {formatDate(n.date)}
                     </div>

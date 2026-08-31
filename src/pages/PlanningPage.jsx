@@ -3,7 +3,7 @@ import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { THEME } from '../theme';
 import { addDays, formatDate, fullName, startOfWeek, statusTone, todayISO, weekdayLabel } from '../lib/utils';
 import { categoryOf, userOf, vehicleOf } from '../lib/stats';
-import { Badge, EmptyState, Modal, PageHeader } from '../components/ui';
+import { Badge, EmptyState, Modal, PageHeader, Select } from '../components/ui';
 import { AddRentalModal } from './RentalsPage';
 
 /* ============================================================
@@ -116,16 +116,11 @@ export function AddProfessionalAppointmentModal({ open, onClose, actions, notify
 
             <div>
               <label style={labelStyle}>Statut</label>
-              <select
+              <Select
                 value={form.statut}
-                onChange={(e) => update('statut', e.target.value)}
-                style={inputStyle}
-              >
-                <option value="Prévu">Prévu</option>
-                <option value="Confirmé">Confirmé</option>
-                <option value="Terminé">Terminé</option>
-                <option value="Annulé">Annulé</option>
-              </select>
+                onChange={(v) => update('statut', v)}
+                options={['Prévu', 'Confirmé', 'Terminé', 'Annulé'].map((s) => ({ value: s, label: s }))}
+              />
             </div>
           </div>
 
@@ -864,7 +859,9 @@ export function PlanningPage({ db, actions, notify, session }) {
                   Notes
                 </div>
 
-                <div>{detailAppointment.notes}</div>
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {detailAppointment.notes}
+                </div>
               </div>
             )}
 

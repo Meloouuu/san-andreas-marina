@@ -208,6 +208,32 @@ export function TodoPage({ db, actions, notify }) {
         }
       />
 
+      {db.tasksUnavailable && (
+        <div
+          className="sam-card"
+          style={{
+            padding: '18px 22px',
+            marginBottom: 22,
+            borderColor: 'rgba(240,199,94,0.32)',
+            background: 'linear-gradient(155deg, rgba(212,167,44,0.14), rgba(16,40,63,0.6))',
+          }}
+        >
+          <div
+            className="sam-display"
+            style={{ fontSize: 17, fontWeight: 700, color: THEME.goldLight, marginBottom: 6 }}
+          >
+            La to-do list n’est pas encore installée
+          </div>
+          <p style={{ fontSize: 13.5, color: THEME.textMuted, margin: 0, lineHeight: 1.65 }}>
+            Il reste une manipulation à faire une seule fois : ouvrez votre projet sur supabase.com,
+            allez dans <b style={{ color: THEME.text }}>SQL Editor</b>, collez le contenu du fichier{' '}
+            <b style={{ color: THEME.text }}>sql/create_tasks_table.sql</b> puis cliquez sur{' '}
+            <b style={{ color: THEME.text }}>Run</b>. Rechargez ensuite cette page : vos tâches
+            pourront être enregistrées et partagées avec toute l’équipe.
+          </p>
+        </div>
+      )}
+
       <div
         style={{
           display: 'grid',
@@ -352,6 +378,8 @@ export function TodoPage({ db, actions, notify }) {
                                 marginTop: 5,
                                 lineHeight: 1.55,
                                 wordBreak: 'break-word',
+                                /* Conserve les retours à la ligne saisis. */
+                                whiteSpace: 'pre-wrap',
                               }}
                             >
                               {t.note}

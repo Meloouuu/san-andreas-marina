@@ -345,6 +345,21 @@ export function GlobalStyles() {
       }
       .sam-tab:not(.active):hover { color: ${THEME.text}; background: rgba(255,255,255,0.05); }
 
+      /* Option d'un menu déroulant maison (composant Select). */
+      .sam-select-option {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        width: 100%; padding: 10px 14px; border: none; border-radius: 12px;
+        font-family: inherit; font-size: 13.5px; font-weight: 600; text-align: left;
+        cursor: pointer;
+        transition: background .16s var(--sam-ease), color .16s var(--sam-ease);
+      }
+      .sam-select-option:hover { background: rgba(255,255,255,0.07) !important; }
+      .sam-select-option:focus-visible {
+        outline: none;
+        background: rgba(212,167,44,0.16) !important;
+        box-shadow: inset 0 0 0 1px rgba(212,167,44,0.5);
+      }
+
       .sam-scrollbar-none::-webkit-scrollbar { display: none; }
 
       /* ============================================================

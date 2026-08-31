@@ -194,6 +194,10 @@ export async function loadDatabase() {
         dateCreation: toDate(a.date_creation),
       })),
 
+    /* Permet à la page To-do list de distinguer « pas encore de tâche » de
+       « la table n'existe pas », et d'afficher le bon message. */
+    tasksUnavailable: !!(tasksRes && tasksRes.error),
+
     tasks:
       tasksRes && !tasksRes.error
         ? (tasksRes.data || []).map(t => ({
@@ -208,6 +212,20 @@ export async function loadDatabase() {
           }))
         : [],
   };
+}
+
+/* La table `tasks` doit être créée à la main (sql/create_tasks_table.sql).
+   Tant qu'elle manque, Supabase répond un message technique en anglais :
+   on le remplace par une consigne claire, l'utilisateur n'est pas
+   développeur et c'est lui qui doit lancer le script. */
+function tableTaskError(error) {
+  const message = String((error && error.message) || '');
+  if (message.includes("Could not find the table") || error.code === 'PGRST205') {
+    return new Error(
+      "La to-do list n'est pas encore installée : exécutez le script sql/create_tasks_table.sql dans Supabase (SQL Editor).",
+    );
+  }
+  return error;
 }
 
 export async function saveTask(task) {
@@ -226,7 +244,7 @@ export async function saveTask(task) {
 
   if (error) {
     console.error('Erreur Supabase (tâches) :', error);
-    throw error;
+    throw tableTaskError(error);
   }
 }
 
@@ -235,7 +253,7 @@ export async function deleteTask(taskId) {
 
   if (error) {
     console.error('Erreur Supabase (suppression tâche) :', error);
-    throw error;
+    throw tableTaskError(error);
   }
 }
 export async function saveVehicle(vehicle) {
