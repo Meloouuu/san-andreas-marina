@@ -121,7 +121,7 @@ export function ProfilePage({ session, db, actions, notify }) {
   const docsOk = (session.contratSigne ? 1 : 0) + (session.visiteMedicale ? 1 : 0);
 
   return (
-    <div className="sam-fade-in" style={{ maxWidth: 940 }}>
+    <div className="sam-fade-in">
       <PageHeader
         eyebrow="Compte"
         title="Mon profil"

@@ -513,6 +513,7 @@ export function GlobalStyles() {
       .sam-root .flex-wrap { flex-wrap: wrap; }
       .sam-root .items-center { align-items: center; }
       .sam-root .items-start { align-items: flex-start; }
+      .sam-root .items-end { align-items: flex-end; }
       .sam-root .justify-between { justify-content: space-between; }
       .sam-root .justify-center { justify-content: center; }
       .sam-root .justify-end { justify-content: flex-end; }
@@ -529,6 +530,7 @@ export function GlobalStyles() {
       .flex { display: flex; }
       .flex-col { flex-direction: column; }
       .items-center { align-items: center; }
+      .items-end { align-items: flex-end; }
       .justify-center { justify-content: center; }
       .justify-between { justify-content: space-between; }
       .justify-end { justify-content: flex-end; }
