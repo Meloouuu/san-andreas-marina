@@ -1,17 +1,100 @@
-import { useState } from 'react';
-import { Users as UsersIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Users as UsersIcon } from 'lucide-react';
 import { THEME } from '../theme';
-import { formatDate, fullName } from '../lib/utils';
-import { citizenRentals, citizenPermits, citizenLastActivity } from '../lib/stats';
-import { Avatar, PageHeader, SearchInput, EmptyState } from '../components/ui';
+import { formatDate, fullName, todayISO, uid } from '../lib/utils';
+import { citizenRentals, citizenPermits, citizenLastActivity, nextCitizenId } from '../lib/stats';
+import { Avatar, FieldRow, Modal, PageHeader, SearchInput, EmptyState } from '../components/ui';
 
 /* ============================================================
    CITOYENS / CLIENTS
    ============================================================ */
 
+/* L'identifiant (CIT-0001, CIT-0002...) est attribué automatiquement à la
+   suite du dernier existant : c'est la même règle que lors de la création
+   d'un candidat depuis la page Permis, pour ne pas créer deux séries. */
+export function CitizenModal({ open, onClose, db, actions, notify }) {
+  const blank = { prenom: '', nom: '', telephone: '' };
+  const [form, setForm] = useState(blank);
 
-export function CitizensPage({ db, notify, openCitizen }) {
+  useEffect(() => {
+    if (open) setForm(blank);
+  }, [open]);
+
+  function submit() {
+    if (!form.prenom.trim() || !form.nom.trim()) {
+      notify('Veuillez indiquer le prénom et le nom du client.', 'error');
+      return;
+    }
+
+    actions.addCitizen({
+      id: uid('c'),
+      prenom: form.prenom.trim(),
+      nom: form.nom.trim(),
+      telephone: form.telephone.trim(),
+      identifiant: nextCitizenId(db.citizens),
+      photo: '',
+      dateCreation: todayISO(),
+    });
+    onClose();
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Nouveau client"
+      subtitle="Un identifiant lui sera attribué automatiquement."
+      width={460}
+    >
+      <div>
+        <div className="flex gap-3 flex-wrap">
+          <div style={{ flex: 1, minWidth: 150 }}>
+            <FieldRow label="Prénom">
+              <input
+                className="sam-input"
+                value={form.prenom}
+                onChange={(e) => setForm({ ...form, prenom: e.target.value })}
+                placeholder="Ex : Marie"
+              />
+            </FieldRow>
+          </div>
+          <div style={{ flex: 1, minWidth: 150 }}>
+            <FieldRow label="Nom">
+              <input
+                className="sam-input"
+                value={form.nom}
+                onChange={(e) => setForm({ ...form, nom: e.target.value })}
+                placeholder="Ex : Dupont"
+              />
+            </FieldRow>
+          </div>
+        </div>
+
+        <FieldRow label="Téléphone (facultatif)">
+          <input
+            className="sam-input"
+            value={form.telephone}
+            onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+            placeholder="555-0000"
+          />
+        </FieldRow>
+
+        <div className="flex justify-end gap-3">
+          <button type="button" className="sam-btn sam-btn-ghost" onClick={onClose}>
+            Annuler
+          </button>
+          <button type="button" className="sam-btn sam-btn-gold" onClick={submit}>
+            Créer le client
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+export function CitizensPage({ db, actions, notify, openCitizen }) {
   const [search, setSearch] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
   const rows = db.citizens
     .filter(
       (c) =>
@@ -26,6 +109,11 @@ export function CitizensPage({ db, notify, openCitizen }) {
         eyebrow="Permis"
         title="Citoyens / Clients"
         subtitle="Retrouvez toutes les personnes ayant interagi avec San Andreas Marina."
+        action={
+          <button className="sam-btn sam-btn-gold" onClick={() => setShowAdd(true)}>
+            <Plus size={16} /> Nouveau client
+          </button>
+        }
       />
       <div style={{ marginBottom: 18 }}>
         <SearchInput value={search} onChange={setSearch} placeholder="Nom, téléphone ou identifiant..." />
@@ -84,6 +172,14 @@ export function CitizensPage({ db, notify, openCitizen }) {
           </table>
         </div>
       )}
+
+      <CitizenModal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        db={db}
+        actions={actions}
+        notify={notify}
+      />
     </div>
   );
 }

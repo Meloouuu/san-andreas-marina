@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pencil, Plus, Receipt, Trash2, TrendingDown, Wallet } from 'lucide-react';
+import { Pencil, Plus, Receipt, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { THEME } from '../theme';
 import { addDays, formatCurrency, formatDate, isoDate, startOfWeek, todayISO } from '../lib/utils';
-import { expenseEntries, sumExpenses, sumCA, inRange } from '../lib/stats';
+import { expenseEntries, incomeEntries, sumExpenses, sumCA, inRange } from '../lib/stats';
 import {
   ConfirmDialog,
   EmptyState,
@@ -17,7 +17,12 @@ import {
    DÉPENSES
    ============================================================ */
 
-export function ExpenseModal({ open, onClose, expense, categories, actions, notify }) {
+/* Une seule fenêtre pour les deux sens d'écriture : les champs sont
+   identiques, seuls les libellés changent. `type` vaut 'depense' ou
+   'entree' et part tel quel en base. */
+export function ExpenseModal({ open, onClose, expense, type, categories, actions, notify }) {
+  const estEntree = type === 'entree';
+
   const blank = {
     date: todayISO(),
     libelle: '',
@@ -33,7 +38,7 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
 
   function submit() {
     if (!form.libelle.trim()) {
-      notify('Veuillez indiquer à quoi correspond la dépense.', 'error');
+      notify(`Veuillez indiquer à quoi correspond l'${estEntree ? 'entrée' : 'a dépense'}.`, 'error');
       return;
     }
     const montant = Number(String(form.montant).replace(',', '.'));
@@ -42,7 +47,7 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
       return;
     }
     if (!form.date) {
-      notify('Veuillez indiquer la date de la dépense.', 'error');
+      notify(`Veuillez indiquer la date de l'${estEntree ? 'entrée' : 'a dépense'}.`, 'error');
       return;
     }
 
@@ -52,6 +57,7 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
       categorie: form.categorie.trim(),
       montant,
       note: form.note.trim(),
+      type: estEntree ? 'entree' : 'depense',
     };
 
     if (expense) {
@@ -66,16 +72,30 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
     <Modal
       open={open}
       onClose={onClose}
-      title={expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
-      subtitle="Elle sera comptée dans le total de la semaine et sur le tableau de bord."
+      title={
+        expense
+          ? estEntree
+            ? "Modifier l'entrée"
+            : 'Modifier la dépense'
+          : estEntree
+            ? 'Nouvelle entrée'
+            : 'Nouvelle dépense'
+      }
+      subtitle={
+        estEntree
+          ? "Elle s'ajoutera au chiffre d'affaires de la semaine et au tableau de bord."
+          : 'Elle sera comptée dans le total de la semaine et sur le tableau de bord.'
+      }
     >
       <div>
-        <FieldRow label="Dépense">
+        <FieldRow label={estEntree ? 'Entrée' : 'Dépense'}>
           <input
             className="sam-input"
             value={form.libelle}
             onChange={(e) => setForm({ ...form, libelle: e.target.value })}
-            placeholder="Ex : Plein de carburant SAM-001"
+            placeholder={
+              estEntree ? 'Ex : Virement hebdomadaire partenariat' : 'Ex : Plein de carburant SAM-001'
+            }
           />
         </FieldRow>
 
@@ -108,14 +128,14 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
         <FieldRow label="Catégorie (facultatif)">
           <input
             className="sam-input"
-            list="sam-categories-depense"
+            list={estEntree ? 'sam-categories-entree' : 'sam-categories-depense'}
             value={form.categorie}
             onChange={(e) => setForm({ ...form, categorie: e.target.value })}
-            placeholder="Ex : Carburant"
+            placeholder={estEntree ? 'Ex : Partenariat' : 'Ex : Carburant'}
           />
           {/* Rappelle les catégories déjà saisies : évite les doublons
               d'orthographe qui fausseraient la répartition. */}
-          <datalist id="sam-categories-depense">
+          <datalist id={estEntree ? 'sam-categories-entree' : 'sam-categories-depense'}>
             {categories.map((c) => (
               <option key={c} value={c} />
             ))}
@@ -129,7 +149,9 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
             style={{ resize: 'vertical', fontFamily: 'inherit' }}
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
-            placeholder="Fournisseur, référence, précisions..."
+            placeholder={
+              estEntree ? 'Partenaire, référence du virement...' : 'Fournisseur, référence, précisions...'
+            }
           />
         </FieldRow>
 
@@ -138,7 +160,7 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
             Annuler
           </button>
           <button type="button" className="sam-btn sam-btn-gold" onClick={submit}>
-            {expense ? 'Enregistrer' : 'Ajouter la dépense'}
+            {expense ? 'Enregistrer' : `Ajouter l'${estEntree ? 'entrée' : 'a dépense'}`}
           </button>
         </div>
       </div>
@@ -148,12 +170,25 @@ export function ExpenseModal({ open, onClose, expense, categories, actions, noti
 
 export function ExpensesPage({ db, actions, notify }) {
   const [period, setPeriod] = useState('semaine');
+  const [sens, setSens] = useState('depense');
   const [search, setSearch] = useState('');
   const [modalExpense, setModalExpense] = useState(undefined);
+  const [modalType, setModalType] = useState('depense');
   const [deleteExpense, setDeleteExpense] = useState(null);
 
-  const toutes = expenseEntries(db);
-  const categories = [...new Set(toutes.map((e) => e.categorie).filter((c) => c && c !== 'Maintenance'))].sort();
+  const depenses = expenseEntries(db).map((e) => ({ ...e, sens: 'depense' }));
+  const entrees = incomeEntries(db).map((e) => ({ ...e, sens: 'entree' }));
+  const toutes = [...depenses, ...entrees].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  /* Les catégories proposées en saisie ne mélangent pas les deux sens :
+     "Partenariat" n'a rien à faire dans une liste de dépenses. */
+  const categoriesModale = [
+    ...new Set(
+      (modalType === 'entree' ? entrees : depenses)
+        .map((e) => e.categorie)
+        .filter((c) => c && c !== 'Maintenance' && c !== 'Sans catégorie'),
+    ),
+  ].sort();
 
   const weekStart = startOfWeek(todayISO());
   const weekEnd = addDays(weekStart, 6);
@@ -162,7 +197,8 @@ export function ExpensesPage({ db, actions, notify }) {
   const debut = period === 'semaine' ? weekStart : period === 'mois' ? isoDate(-29) : null;
   const fin = period === 'semaine' ? weekEnd : period === 'mois' ? todayISO() : null;
 
-  const dePeriode = debut ? toutes.filter((e) => inRange(e.date, debut, fin)) : toutes;
+  const duSens = sens === 'tout' ? toutes : toutes.filter((e) => e.sens === sens);
+  const dePeriode = debut ? duSens.filter((e) => inRange(e.date, debut, fin)) : duSens;
 
   const visibles = dePeriode.filter((e) => {
     const q = search.trim().toLowerCase();
@@ -174,12 +210,14 @@ export function ExpensesPage({ db, actions, notify }) {
     );
   });
 
-  const totalPeriode = sumExpenses(dePeriode);
-  const totalSemaine = sumExpenses(toutes.filter((e) => inRange(e.date, weekStart, weekEnd)));
-  const caSemaine = sumCA(db.rentals.filter((r) => inRange(r.date, weekStart, weekEnd)));
+  const dansLaSemaine = (liste) => liste.filter((e) => inRange(e.date, weekStart, weekEnd));
+  const totalSemaine = sumExpenses(dansLaSemaine(depenses));
+  const entreesSemaine = sumExpenses(dansLaSemaine(entrees));
+  const caSemaine = sumCA(db.rentals.filter((r) => inRange(r.date, weekStart, weekEnd))) + entreesSemaine;
   const beneficeSemaine = caSemaine - totalSemaine;
 
-  /* Répartition par catégorie sur la période affichée. */
+  /* Répartition par catégorie sur ce qui est affiché. */
+  const totalPeriode = sumExpenses(dePeriode);
   const parCategorie = [...new Set(dePeriode.map((e) => e.categorie))]
     .map((cat) => ({ cat, montant: sumExpenses(dePeriode.filter((e) => e.categorie === cat)) }))
     .sort((a, b) => b.montant - a.montant);
@@ -187,16 +225,26 @@ export function ExpensesPage({ db, actions, notify }) {
   const libellePeriode =
     period === 'semaine' ? 'cette semaine' : period === 'mois' ? 'sur 30 jours' : 'depuis le début';
 
+  function ouvrirModale(type, expense) {
+    setModalType(type);
+    setModalExpense(expense === undefined ? null : expense);
+  }
+
   return (
     <div className="sam-fade-in">
       <PageHeader
         eyebrow="Entreprise"
-        title="Dépenses"
-        subtitle="Toutes les sorties d'argent de la marina. Les coûts de maintenance saisis sur les fiches véhicules sont inclus automatiquement."
+        title="Dépenses et entrées"
+        subtitle="Les sorties et les rentrées d'argent de la marina. Les coûts de maintenance saisis sur les fiches véhicules sont comptés automatiquement dans les dépenses, et les entrées s'ajoutent au chiffre d'affaires."
         action={
-          <button className="sam-btn sam-btn-gold" onClick={() => setModalExpense(null)}>
-            <Plus size={16} /> Nouvelle dépense
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button className="sam-btn sam-btn-gold" onClick={() => ouvrirModale('depense')}>
+              <Plus size={16} /> Nouvelle dépense
+            </button>
+            <button className="sam-btn sam-btn-ghost" onClick={() => ouvrirModale('entree')}>
+              <Plus size={16} /> Nouvelle entrée
+            </button>
+          </div>
         }
       />
 
@@ -241,9 +289,16 @@ export function ExpensesPage({ db, actions, notify }) {
           highlight
         />
         <StatCard
+          label="Entrées cette semaine"
+          value={formatCurrency(entreesSemaine)}
+          icon={<TrendingUp size={16} />}
+          sub="Hors locations"
+        />
+        <StatCard
           label="Chiffre d'affaires (semaine)"
           value={formatCurrency(caSemaine)}
           icon={<Wallet size={16} />}
+          sub="Locations + entrées"
         />
         <StatCard
           label="Bénéfice net (semaine)"
@@ -271,6 +326,27 @@ export function ExpensesPage({ db, actions, notify }) {
             ['tout', 'Tout'],
           ].map(([id, label]) => (
             <div key={id} className={`sam-tab ${period === id ? 'active' : ''}`} onClick={() => setPeriod(id)}>
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="flex gap-1"
+          style={{
+            background: 'rgba(7,21,37,0.5)',
+            padding: 5,
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.07)',
+            boxShadow: 'inset 0 2px 8px rgba(2,8,16,0.45)',
+          }}
+        >
+          {[
+            ['depense', 'Dépenses'],
+            ['entree', 'Entrées'],
+            ['tout', 'Les deux'],
+          ].map(([id, label]) => (
+            <div key={id} className={`sam-tab ${sens === id ? 'active' : ''}`} onClick={() => setSens(id)}>
               {label}
             </div>
           ))}
@@ -327,8 +403,14 @@ export function ExpensesPage({ db, actions, notify }) {
         <div className="sam-card">
           <EmptyState
             icon={<Receipt size={30} />}
-            text="Aucune dépense sur cette période"
-            sub="Enregistrez une dépense pour suivre ce que la marina dépense chaque semaine."
+            text={
+              sens === 'entree' ? 'Aucune entrée sur cette période' : 'Aucune dépense sur cette période'
+            }
+            sub={
+              sens === 'entree'
+                ? "Enregistrez une entrée pour les revenus hors location : partenariat, remboursement..."
+                : 'Enregistrez une dépense pour suivre ce que la marina dépense chaque semaine.'
+            }
           />
         </div>
       ) : (
@@ -337,7 +419,7 @@ export function ExpensesPage({ db, actions, notify }) {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Dépense</th>
+                <th>Libellé</th>
                 <th>Catégorie</th>
                 <th>Montant</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -364,12 +446,28 @@ export function ExpensesPage({ db, actions, notify }) {
                   </td>
                   <td>
                     <span
-                      className={`sam-badge ${e.source === 'maintenance' ? 'sam-badge-info' : 'sam-badge-neutral'}`}
+                      className={`sam-badge ${
+                        e.sens === 'entree'
+                          ? 'sam-badge-success'
+                          : e.source === 'maintenance'
+                            ? 'sam-badge-info'
+                            : 'sam-badge-neutral'
+                      }`}
                     >
                       {e.categorie}
                     </span>
                   </td>
-                  <td style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{formatCurrency(e.montant)}</td>
+                  {/* Le signe évite toute ambiguïté quand les deux sens sont
+                      affichés côte à côte. */}
+                  <td
+                    style={{
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      color: e.sens === 'entree' ? '#4CDB9B' : THEME.text,
+                    }}
+                  >
+                    {e.sens === 'entree' ? '+' : '−'} {formatCurrency(e.montant)}
+                  </td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     {e.source === 'maintenance' ? (
                       <span style={{ fontSize: 12, color: THEME.textMuted }}>
@@ -379,15 +477,15 @@ export function ExpensesPage({ db, actions, notify }) {
                       <div className="flex gap-2" style={{ justifyContent: 'flex-end' }}>
                         <button
                           className="sam-btn sam-btn-ghost sam-btn-sm"
-                          onClick={() => setModalExpense(db.expenses.find((x) => x.id === e.id))}
-                          aria-label="Modifier la dépense"
+                          onClick={() => ouvrirModale(e.sens, db.expenses.find((x) => x.id === e.id))}
+                          aria-label={e.sens === 'entree' ? "Modifier l'entrée" : 'Modifier la dépense'}
                         >
                           <Pencil size={13} />
                         </button>
                         <button
                           className="sam-btn sam-btn-danger sam-btn-sm"
                           onClick={() => setDeleteExpense(e)}
-                          aria-label="Supprimer la dépense"
+                          aria-label={e.sens === 'entree' ? "Supprimer l'entrée" : 'Supprimer la dépense'}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -405,7 +503,8 @@ export function ExpensesPage({ db, actions, notify }) {
         open={modalExpense !== undefined}
         onClose={() => setModalExpense(undefined)}
         expense={modalExpense}
-        categories={categories}
+        type={modalType}
+        categories={categoriesModale}
         actions={actions}
         notify={notify}
       />
@@ -414,7 +513,7 @@ export function ExpensesPage({ db, actions, notify }) {
         open={!!deleteExpense}
         onCancel={() => setDeleteExpense(null)}
         danger
-        title="Supprimer cette dépense ?"
+        title={deleteExpense && deleteExpense.sens === 'entree' ? 'Supprimer cette entrée ?' : 'Supprimer cette dépense ?'}
         message={
           deleteExpense
             ? `"${deleteExpense.libelle}" (${formatCurrency(deleteExpense.montant)}) sera définitivement supprimée.`

@@ -230,6 +230,11 @@ export async function loadDatabase() {
             date: toDate(e.date),
             libelle: e.libelle || '',
             categorie: e.categorie || '',
+            /* 'entree' = argent qui rentre (partenariat, remboursement),
+               'depense' = argent qui sort. Les lignes enregistrées avant
+               l'ajout de cette colonne n'ont pas de type : elles retombent
+               sur 'depense', ce qu'elles étaient toutes. */
+            type: e.type === 'entree' ? 'entree' : 'depense',
             montant: Number(e.montant || 0),
             note: e.note || '',
             dateCreation: toDate(e.date_creation),
@@ -252,17 +257,36 @@ function tableExpenseError(error) {
 }
 
 export async function saveExpense(expense) {
-  const { error } = await supabase
-    .from('expenses')
-    .upsert({
-      id: expense.id,
-      date: expense.date || null,
-      libelle: expense.libelle || '',
-      categorie: expense.categorie || '',
-      montant: Number(expense.montant || 0),
-      note: expense.note || '',
-      date_creation: expense.dateCreation || null,
-    }, { onConflict: 'id' });
+  const estEntree = expense.type === 'entree';
+  const row = {
+    id: expense.id,
+    date: expense.date || null,
+    libelle: expense.libelle || '',
+    categorie: expense.categorie || '',
+    type: estEntree ? 'entree' : 'depense',
+    montant: Number(expense.montant || 0),
+    note: expense.note || '',
+    date_creation: expense.dateCreation || null,
+  };
+
+  let { error } = await supabase.from('expenses').upsert(row, { onConflict: 'id' });
+
+  /* La colonne `type` a été ajoutée après coup (sql/add_expenses_type_column.sql).
+     Si elle manque encore, on réenregistre sans elle plutôt que de bloquer la
+     saisie : les dépenses continuent de fonctionner comme avant. Seules les
+     entrées ont réellement besoin de la colonne, d'où le message dédié. */
+  const colonneTypeAbsente =
+    error && (error.code === 'PGRST204' || String(error.message || '').includes("'type' column"));
+
+  if (colonneTypeAbsente) {
+    if (estEntree) {
+      throw new Error(
+        "Les entrées ne sont pas encore activées : exécutez le script sql/add_expenses_type_column.sql dans Supabase (SQL Editor).",
+      );
+    }
+    const { type, ...sansType } = row;
+    ({ error } = await supabase.from('expenses').upsert(sansType, { onConflict: 'id' }));
+  }
 
   if (error) {
     console.error('Erreur Supabase (dépenses) :', error);

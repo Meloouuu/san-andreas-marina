@@ -89,15 +89,17 @@ export function computeEmployeeStats(db) {
    ne pas être modifiables depuis la page Dépenses — elles se gèrent depuis
    la fiche du véhicule concerné. */
 export function expenseEntries(db) {
-  const saisies = (db.expenses || []).map((e) => ({
-    id: e.id,
-    date: e.date,
-    libelle: e.libelle,
-    categorie: e.categorie || 'Sans catégorie',
-    montant: Number(e.montant || 0),
-    note: e.note || '',
-    source: 'manuelle',
-  }));
+  const saisies = (db.expenses || [])
+    .filter((e) => e.type !== 'entree')
+    .map((e) => ({
+      id: e.id,
+      date: e.date,
+      libelle: e.libelle,
+      categorie: e.categorie || 'Sans catégorie',
+      montant: Number(e.montant || 0),
+      note: e.note || '',
+      source: 'manuelle',
+    }));
 
   const maintenances = (db.maintenances || [])
     .filter((m) => Number(m.cout || 0) > 0)
@@ -121,16 +123,39 @@ export function sumExpenses(entries) {
   return entries.reduce((s, e) => s + Number(e.montant || 0), 0);
 }
 
+/* Entrées d'argent saisies à la main (virement d'un partenaire,
+   remboursement...). Elles s'ajoutent au chiffre d'affaires des locations
+   mais restent stockées dans la même table que les dépenses, distinguées
+   par la colonne `type`. */
+export function incomeEntries(db) {
+  return (db.expenses || [])
+    .filter((e) => e.type === 'entree')
+    .map((e) => ({
+      id: e.id,
+      date: e.date,
+      libelle: e.libelle,
+      categorie: e.categorie || 'Sans catégorie',
+      montant: Number(e.montant || 0),
+      note: e.note || '',
+      source: 'manuelle',
+    }))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
 export function computeDashboardStats(db) {
   const weekStart = startOfWeek(todayISO());
   const weekEnd = addDays(weekStart, 6);
   const weekRentals = db.rentals.filter((r) => inRange(r.date, weekStart, weekEnd));
-  const caWeek = sumCA(weekRentals);
+  /* Le chiffre d'affaires additionne les locations et les entrées saisies :
+     un virement de partenariat compte comme du revenu au même titre. */
+  const entreesWeek = sumExpenses(incomeEntries(db).filter((e) => inRange(e.date, weekStart, weekEnd)));
+  const caWeek = sumCA(weekRentals) + entreesWeek;
   const depensesWeek = sumExpenses(expenseEntries(db).filter((e) => inRange(e.date, weekStart, weekEnd)));
 
   return {
     locationsWeek: weekRentals.filter((r) => r.statut !== 'Annulée').length,
     caWeek,
+    entreesWeek,
     depensesWeek,
     beneficeWeek: caWeek - depensesWeek,
     vehiculesDispo: db.vehicles.filter((v) => v.statut === 'Disponible').length,
@@ -147,6 +172,7 @@ export function computeDashboardStats(db) {
 export function financeByPeriod(db, period) {
   const rentals = db.rentals;
   const depenses = expenseEntries(db);
+  const entrees = incomeEntries(db);
   const buckets = [];
 
   if (period === 'semaine') {
@@ -156,7 +182,7 @@ export function financeByPeriod(db, period) {
       buckets.push({
         label: weekdayLabel(d),
         date: d,
-        ca: sumCA(rentals.filter((r) => r.date === d)),
+        ca: sumCA(rentals.filter((r) => r.date === d)) + sumExpenses(entrees.filter((e) => e.date === d)),
         depenses: sumExpenses(depenses.filter((e) => e.date === d)),
       });
     }
@@ -166,7 +192,7 @@ export function financeByPeriod(db, period) {
       buckets.push({
         label: d.slice(8, 10),
         date: d,
-        ca: sumCA(rentals.filter((r) => r.date === d)),
+        ca: sumCA(rentals.filter((r) => r.date === d)) + sumExpenses(entrees.filter((e) => e.date === d)),
         depenses: sumExpenses(depenses.filter((e) => e.date === d)),
       });
     }
@@ -178,6 +204,10 @@ export function financeByPeriod(db, period) {
         const m = r.date.slice(0, 7);
         caByMonth[m] = (caByMonth[m] || 0) + Number(r.prix);
       }
+    });
+    entrees.forEach((e) => {
+      const m = String(e.date).slice(0, 7);
+      caByMonth[m] = (caByMonth[m] || 0) + Number(e.montant || 0);
     });
     const depByMonth = {};
     depenses.forEach((e) => {

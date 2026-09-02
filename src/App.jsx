@@ -284,7 +284,7 @@ function App() {
           />
         );
       case 'citizens':
-        return <CitizensPage db={db} notify={notify} openCitizen={openCitizen} />;
+        return <CitizensPage db={db} actions={actions} notify={notify} openCitizen={openCitizen} />;
       case 'todo':
         return <TodoPage db={db} actions={actions} notify={notify} />;
       case 'expenses':
