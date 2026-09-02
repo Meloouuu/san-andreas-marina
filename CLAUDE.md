@@ -220,8 +220,18 @@ passe, seul son stockage change) :
 node scripts/hash-passwords.mjs
 ```
 
-Déploiement automatique sur GitHub Pages à chaque envoi sur `main`, via
-`.github/workflows/deploy.yml`.
+Deux déploiements automatiques se déclenchent à chaque envoi sur `main` :
+
+- **GitHub Pages**, via `.github/workflows/deploy.yml` (construit `dist/` et
+  le publie).
+- **Dokploy**, via `.github/workflows/dokploy.yml` (appelle son URL de
+  déploiement).
+
+L'URL Dokploy contient un jeton qui suffit à lancer un déploiement : comme le
+dépôt est public, elle n'est **pas** écrite dans le workflow mais lue depuis
+le secret `DOKPLOY_DEPLOY_URL` (dépôt GitHub > Settings > Secrets and
+variables > Actions). Sans ce secret, le workflow échoue avec un message
+explicite plutôt que d'appeler une URL vide.
 
 Variables d'environnement nécessaires, dans un fichier `.env` à la racine :
 

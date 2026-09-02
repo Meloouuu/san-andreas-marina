@@ -1,0 +1,50 @@
+# Declenche le deploiement Dokploy a chaque envoi de code sur la branche
+# principale, en appelant son URL de deploiement.
+#
+# L'URL n'est PAS ecrite ici : elle contient un jeton qui permet de lancer
+# un deploiement, et ce depot est public. Elle est donc stockee dans un
+# secret du depot (Settings > Secrets and variables > Actions) sous le nom
+# DOKPLOY_DEPLOY_URL. Voir la section "Commandes" de CLAUDE.md.
+name: Deploiement Dokploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Si plusieurs envois s'enchainent, seul le dernier declenche un
+# deploiement : inutile de deployer une version deja remplacee.
+concurrency:
+  group: dokploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verifier que le secret est configure
+        env:
+          DEPLOY_URL: ${{ secrets.DOKPLOY_DEPLOY_URL }}
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "Le secret DOKPLOY_DEPLOY_URL n'est pas configure."
+            echo "Ajoutez-le dans Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Appeler l'URL de deploiement Dokploy
+        env:
+          DEPLOY_URL: ${{ secrets.DOKPLOY_DEPLOY_URL }}
+        # --fail : une reponse d'erreur fait echouer l'etape, sinon un
+        #   deploiement refuse passerait inapercu.
+        # --post301/302 : le serveur repond par une redirection, et curl
+        #   transforme sinon le POST en GET en la suivant.
+        # --retry : absorbe une coupure reseau passagere.
+        run: |
+          curl --fail --silent --show-error --location \
+               --request POST \
+               --post301 --post302 --post303 \
+               --max-time 60 \
+               --retry 3 --retry-delay 5 --retry-connrefused \
+               "$DEPLOY_URL"
+          echo "Deploiement Dokploy declenche."
