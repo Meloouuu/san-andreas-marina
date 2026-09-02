@@ -1,0 +1,60 @@
+# Declenche le deploiement Dokploy a chaque envoi de code sur la branche
+# principale, en appelant l'API application.deploy.
+#
+# La cle d'API n'est PAS ecrite ici : ce depot est public. Elle est lue
+# depuis un secret du depot (Settings > Secrets and variables > Actions)
+# nomme DOKPLOY_API_KEY. C'est la meme cle que celle du fichier local
+# .env.local, utilise par deploy-dokploy.bat pour un deploiement manuel.
+#
+# L'identifiant de l'application, lui, n'est pas un secret : seul son
+# appairage avec la cle permet de lancer un deploiement.
+name: Deploiement Dokploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Si plusieurs envois s'enchainent, seul le dernier declenche un
+# deploiement : inutile de deployer une version deja remplacee.
+concurrency:
+  group: dokploy
+  cancel-in-progress: true
+
+env:
+  URL_DEPLOIEMENT: https://dokploy.acerom-app-service.com/api/application.deploy
+  APPLICATION_ID: dOOepo39k6nO4CbWNPil5
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verifier que le secret est configure
+        env:
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+        run: |
+          if [ -z "$DOKPLOY_API_KEY" ]; then
+            echo "Le secret DOKPLOY_API_KEY n'est pas configure."
+            echo "Ajoutez-le dans Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Appeler l'API de deploiement Dokploy
+        env:
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+        # --fail-with-body : un refus fait echouer l'etape tout en affichant
+        #   le message de Dokploy, sinon l'erreur passerait inapercue.
+        # --post301/302/303 : si le serveur repond par une redirection, curl
+        #   transformerait sinon le POST en GET et rien ne serait deploye.
+        # --retry : absorbe une coupure reseau passagere.
+        run: |
+          curl --fail-with-body --silent --show-error --location \
+               --post301 --post302 --post303 \
+               --max-time 60 \
+               --retry 3 --retry-delay 5 --retry-connrefused \
+               --request POST \
+               --header "x-api-key: $DOKPLOY_API_KEY" \
+               --header "Content-Type: application/json" \
+               --data "{\"applicationId\": \"$APPLICATION_ID\"}" \
+               "$URL_DEPLOIEMENT"
+          echo "Deploiement Dokploy declenche."

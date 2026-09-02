@@ -220,14 +220,29 @@ passe, seul son stockage change) :
 node scripts/hash-passwords.mjs
 ```
 
-Un déploiement automatique se déclenche à chaque envoi sur `main` :
-**GitHub Pages**, via `.github/workflows/deploy.yml` (construit `dist/` et le
-publie).
+Deux déploiements automatiques se déclenchent à chaque envoi sur `main` :
 
-Un second workflow appelait l'URL de déploiement Dokploy ; il a été retiré à la
-demande du propriétaire. Le secret `DOKPLOY_DEPLOY_URL` n'est donc plus lu par
-rien et peut être supprimé du dépôt (Settings > Secrets and variables >
-Actions).
+- **GitHub Pages**, via `.github/workflows/deploy.yml` (construit `dist/` et
+  le publie).
+- **Dokploy**, via `.github/workflows/dokploy.yml` (appelle son API
+  `application.deploy`).
+
+La clé d'API Dokploy suffit à lancer un déploiement : comme le dépôt est
+public, elle n'est **pas** écrite dans le workflow mais lue depuis le secret
+`DOKPLOY_API_KEY` (dépôt GitHub > Settings > Secrets and variables > Actions).
+Sans ce secret, le workflow échoue avec un message explicite plutôt que
+d'envoyer un en-tête vide. L'identifiant de l'application, lui, n'est pas un
+secret : seul son appairage avec la clé permet de déployer.
+
+Un déploiement peut aussi être déclenché à la main, sans passer par un envoi
+de code, avec l'un des deux scripts à la racine — même appel, même clé, lue
+cette fois dans `.env.local` (variable `DOKPLOY_API_KEY`, fichier ignoré par
+git) :
+
+```bash
+deploy-dokploy.bat        # double-clic possible, ne demande rien d'installé
+node deploy-dokploy.mjs   # équivalent, pour un terminal
+```
 
 Variables d'environnement nécessaires, dans un fichier `.env` à la racine :
 
