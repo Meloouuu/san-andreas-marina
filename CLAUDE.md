@@ -222,27 +222,17 @@ node scripts/hash-passwords.mjs
 
 Deux déploiements automatiques se déclenchent à chaque envoi sur `main` :
 
+- **Vercel**, l'hébergement de référence. Il n'y a **aucun workflow pour lui
+  dans le dépôt** : c'est l'intégration Git de Vercel qui suit la branche
+  toute seule. Ne cherche pas de fichier à modifier ici, tout se règle depuis
+  le tableau de bord Vercel — y compris les variables `VITE_SUPABASE_URL` et
+  `VITE_SUPABASE_ANON_KEY`, qui doivent y être déclarées, sinon le site se
+  construit mais ne peut pas joindre la base.
 - **GitHub Pages**, via `.github/workflows/deploy.yml` (construit `dist/` et
   le publie).
-- **Dokploy**, via `.github/workflows/dokploy.yml` (appelle son API
-  `application.deploy`).
 
-La clé d'API Dokploy suffit à lancer un déploiement : comme le dépôt est
-public, elle n'est **pas** écrite dans le workflow mais lue depuis le secret
-`DOKPLOY_API_KEY` (dépôt GitHub > Settings > Secrets and variables > Actions).
-Sans ce secret, le workflow échoue avec un message explicite plutôt que
-d'envoyer un en-tête vide. L'identifiant de l'application, lui, n'est pas un
-secret : seul son appairage avec la clé permet de déployer.
-
-Un déploiement peut aussi être déclenché à la main, sans passer par un envoi
-de code, avec l'un des deux scripts à la racine — même appel, même clé, lue
-cette fois dans `.env.local` (variable `DOKPLOY_API_KEY`, fichier ignoré par
-git) :
-
-```bash
-deploy-dokploy.bat        # double-clic possible, ne demande rien d'installé
-node deploy-dokploy.mjs   # équivalent, pour un terminal
-```
+L'hébergement Dokploy a été abandonné : son workflow et ses deux scripts de
+déclenchement manuel ont été supprimés.
 
 Variables d'environnement nécessaires, dans un fichier `.env` à la racine :
 
