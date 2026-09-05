@@ -38,6 +38,21 @@ function mapUser(u) {
   };
 }
 
+function mapCategory(c) {
+  return {
+    id: c.id,
+    nom: c.nom,
+    description: c.description || '',
+    icone: c.icone || '',
+    statut: c.statut || 'Actif',
+    /* Tarification prédéfinie : voir computeSuggestedRentalPrice() dans
+       lib/stats.js. `prixHeure` = tarif de départ à l'heure, `reductionHeure`
+       = % de réduction par heure au-delà de la première. */
+    prixHeure: Number(c.prix_heure || 0),
+    reductionHeure: Number(c.reduction_heure || 0),
+  };
+}
+
 function mapCitizen(c) {
   return {
     id: c.id,
@@ -142,7 +157,7 @@ export async function loadDatabase() {
   }
 
   return {
-    categories: categoriesRes.data || [],
+    categories: (categoriesRes.data || []).map(mapCategory),
 
     users: (usersRes.data || []).map(mapUser),
 
@@ -398,6 +413,8 @@ export async function saveCategory(category) {
         description: category.description || '',
         icone: category.icone || '',
         statut: category.statut || 'Actif',
+        prix_heure: Number(category.prixHeure || 0),
+        reduction_heure: Number(category.reductionHeure || 0),
       },
       { onConflict: 'id' }
     )

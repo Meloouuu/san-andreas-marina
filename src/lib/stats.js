@@ -298,6 +298,23 @@ export function parseDuree(d) {
   return parseFloat(s) || 0;
 }
 
+/* Prix suggéré pour une location, à partir du tarif de la catégorie du
+   véhicule : prixHeure * nombre d'heures, avec une réduction dégressive de
+   reductionHeure % par heure au-delà de la première (ex. 8 -> -8% à 2h,
+   -16% à 3h, etc.). Plafonnée à 50% de réduction pour qu'une très longue
+   location ne tombe jamais sous la moitié du tarif horaire normal.
+   Renvoie null si la catégorie n'a pas de tarif défini : le prix reste alors
+   entièrement manuel, comme avant cette fonctionnalité. */
+export function computeSuggestedRentalPrice(category, duree) {
+  if (!category || !category.prixHeure) return null;
+  const heures = parseDuree(duree);
+  if (!heures) return null;
+  const heuresSupplementaires = Math.max(0, heures - 1);
+  const reduction = Number(category.reductionHeure || 0) / 100;
+  const multiplicateur = Math.max(1 - reduction * heuresSupplementaires, 0.5);
+  return Math.round(category.prixHeure * heures * multiplicateur);
+}
+
 export function vehicleStats(db, vehicleId) {
   const rentals = db.rentals.filter(
     (r) => r.vehiculeId === vehicleId && r.statut !== 'Annulée' && r.statut !== 'Réservée',

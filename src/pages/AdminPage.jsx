@@ -10,7 +10,7 @@ import { Badge, Avatar, PageHeader, Modal, ConfirmDialog, SearchInput, Select, F
    ============================================================ */
 
 export function CategoryModal({ open, onClose, category, db, actions, notify }) {
-  const blank = { nom: '', description: '', icone: '🚤', statut: 'Actif' };
+  const blank = { nom: '', description: '', icone: '🚤', statut: 'Actif', prixHeure: '', reductionHeure: '' };
   const [form, setForm] = useState(blank);
   useEffect(() => {
     if (open) setForm(category || blank);
@@ -21,11 +21,16 @@ export function CategoryModal({ open, onClose, category, db, actions, notify }) 
       notify('Veuillez indiquer le nom de la catégorie.', 'error');
       return;
     }
+    const payload = {
+      ...form,
+      prixHeure: Number(form.prixHeure) || 0,
+      reductionHeure: Number(form.reductionHeure) || 0,
+    };
     if (category) {
-      actions.updateCategory(category.id, form);
+      actions.updateCategory(category.id, payload);
       notify('Catégorie mise à jour.', 'success');
     } else {
-      actions.addCategory({ ...form, id: uid('cat') });
+      actions.addCategory({ ...payload, id: uid('cat') });
       notify('Nouvelle catégorie créée — visible dans le Garage.', 'success');
     }
     onClose();
@@ -74,6 +79,38 @@ export function CategoryModal({ open, onClose, category, db, actions, notify }) 
             ]}
           />
         </FieldRow>
+        <div className="flex gap-3">
+          <div style={{ flex: 1 }}>
+            <FieldRow label="Prix de départ / heure ($)">
+              <input
+                className="sam-input"
+                type="number"
+                min="0"
+                value={form.prixHeure}
+                onChange={(e) => setForm({ ...form, prixHeure: e.target.value })}
+                placeholder="Ex : 450"
+              />
+            </FieldRow>
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldRow label="Réduction / heure suppl. (%)">
+              <input
+                className="sam-input"
+                type="number"
+                min="0"
+                max="100"
+                value={form.reductionHeure}
+                onChange={(e) => setForm({ ...form, reductionHeure: e.target.value })}
+                placeholder="Ex : 8"
+              />
+            </FieldRow>
+          </div>
+        </div>
+        <p style={{ color: THEME.textMuted, fontSize: 12, margin: '-8px 0 12px' }}>
+          Le prix d'une location se pré-remplit automatiquement à partir de ce tarif
+          (prix de départ × durée, réduit de ce pourcentage par heure au-delà de la
+          première). Laissez à 0 pour continuer à saisir le prix à la main.
+        </p>
         <div className="flex justify-end gap-3">
           <button type="button" className="sam-btn sam-btn-ghost" onClick={onClose}>
             Annuler
@@ -116,6 +153,11 @@ export function AdminCategories({ db, actions, notify }) {
             <div style={{ fontWeight: 700, fontSize: 15 }}>{c.nom}</div>
             <div style={{ fontSize: 12.5, color: THEME.textMuted, margin: '4px 0 12px', minHeight: 32 }}>
               {c.description}
+            </div>
+            <div style={{ fontSize: 12.5, color: THEME.gold || THEME.textMuted, marginBottom: 12 }}>
+              {c.prixHeure
+                ? `${formatCurrency(c.prixHeure)} / h${c.reductionHeure ? ` · -${c.reductionHeure}%/h suppl.` : ''}`
+                : 'Aucun tarif défini'}
             </div>
             <div className="flex gap-2">
               <button

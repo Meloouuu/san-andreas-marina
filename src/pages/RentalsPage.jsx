@@ -5,6 +5,7 @@ import { formatCurrency, formatDate, formatDuree, fullName, todayISO } from '../
 import {
   categoryOf,
   checkAvailability,
+  computeSuggestedRentalPrice,
   nextRentalNumber,
   userOf,
   vehicleOf,
@@ -35,9 +36,30 @@ export function AddRentalModal({ open, onClose, db, actions, notify, session, de
     notes: '',
   });
   const [form, setForm] = useState(blank());
+  /* Le prix se pré-remplit à partir du tarif de la catégorie (voir
+     computeSuggestedRentalPrice dans lib/stats.js) tant que l'utilisateur ne
+     l'a pas modifié à la main — au premier caractère tapé dans le champ, on
+     arrête de l'écraser. */
+  const [prixTouched, setPrixTouched] = useState(false);
   useEffect(() => {
-    if (open) setForm(blank());
+    if (open) {
+      setForm(blank());
+      setPrixTouched(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultDate]);
+
+  const vehicule = db.vehicles.find((v) => v.id === form.vehiculeId);
+  const suggestedPrice = vehicule
+    ? computeSuggestedRentalPrice(categoryOf(db, vehicule.categorieId), form.duree)
+    : null;
+
+  useEffect(() => {
+    if (!prixTouched && suggestedPrice !== null) {
+      setForm((f) => ({ ...f, prix: String(suggestedPrice) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestedPrice, prixTouched]);
 
   function submit() {
     if (!form.vehiculeId) {
@@ -130,9 +152,25 @@ export function AddRentalModal({ open, onClose, db, actions, notify, session, de
                 type="number"
                 min="0"
                 value={form.prix}
-                onChange={(e) => setForm({ ...form, prix: e.target.value })}
+                onChange={(e) => {
+                  setPrixTouched(true);
+                  setForm({ ...form, prix: e.target.value });
+                }}
                 placeholder="0"
               />
+              {suggestedPrice !== null && Number(form.prix) !== suggestedPrice && (
+                <button
+                  type="button"
+                  className="sam-btn sam-btn-ghost sam-btn-sm"
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setPrixTouched(false);
+                    setForm({ ...form, prix: String(suggestedPrice) });
+                  }}
+                >
+                  Utiliser le tarif suggéré ({formatCurrency(suggestedPrice)})
+                </button>
+              )}
             </FieldRow>
           </div>
           <div style={{ flex: 1 }}>
